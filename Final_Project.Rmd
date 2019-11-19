@@ -1,0 +1,87 @@
+---
+title: "Final Project"
+author: "Bridget Silha"
+date: "11/7/2019"
+output: pdf_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(httr)
+require(tidyverse)
+#install.packages("remotes")
+#remotes::install_github("robinspollak/R.openFEC")
+
+#Make API request
+my_api_key <- "O1j8sCGbgjwe6GNd0026VW9az9J5Ssv2X8l3DCN8"
+URL <- "https://api.open.fec.gov/v1/committees/?sort_nulls_last=false&sort=name&page=1&sort_null_only=false&per_page=100&api_key=gWb11FjhJGZqJNjtWyI2We24GIl9ybUQxHUYuxFr&sort_hide_null=false"
+get.data <- GET(URL, query=list(api_key=my_api_key))
+fec.data <- content(get.data)
+
+#pull pages temporary data set out
+pages <- fec.data[["pagination"]][["pages"]]
+data_raw <- c()
+for (p in 1:length(pages)){
+  tmp_url <- paste0("https://api.open.fec.gov/v1/committees/?sort_nulls_last=false&sort=name&page=", 
+         p,
+         "&sort_null_only=false&per_page=100&api_key=", 
+         my_api_key, 
+         "&sort_hide_null=false")
+  tmp.get.data <- GET(tmp_url, query=list(api_key=my_api_key))
+  tmp.fec.data <- content(tmp.get.data)[["results"]]
+  for(i in 1:length(tmp.fec.data)){
+  tmp <- tmp.fec.data[[i]] %>% 
+    unlist() %>% 
+    enframe() %>% 
+    mutate(page_entry = paste0(p, "_", i),
+           page = p,
+           entry = i)
+  data_raw <- bind_rows(data_raw,tmp)
+  }
+  Sys.sleep(sample(seq(.5,2,0.5), 1))
+}
+
+
+data_raw <- data_raw %>% 
+  select (-page_entry, -page, -entry)
+
+
+
+#Spread data
+data_raw <- data_raw %>% 
+  spread(., key = name, value = value, fill = NA)
+
+```
+
+
+```{r}
+#Read CVS data in
+total_fec_committee_party_and_pac <- read_csv("committees.csv")
+committee_summary <- read_csv("committee_summary_2020.csv")
+
+##Clean Data
+
+#Filter by party 
+total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
+  filter(party != "NA") 
+
+total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
+  filter(party == "DEM" | party == "REP" | party == "CRV" | party == "LIB" | party == "IAP" | party == "REF")
+
+#Cut down variables
+total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
+  select(-cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name)
+
+#Select PAC Committee Types
+total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
+  filter(committee_type == "N" | committee_type == "O" | committee_type == "Q" | committee_type == "V" | committee_type == "W")
+
+#Join on Committee ID
+new_data <- left_join(committee_summary, total_fec_committee_party_and_pac, by=c("CMTE_ID" = "committee_id"))
+
+colnames(new_data)
+
+
+```
+
