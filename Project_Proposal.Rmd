@@ -1,0 +1,32 @@
+---
+title: "Project Proposal"
+author: "Bridget Silha"
+date: "11/13/2019"
+output: pdf_document
+font: 12
+---
+
+For this project, my focus will be directed towards Federal Election Commission (FEC) data. My analysis will be primarily on Political Action Committees (PACs) and Super PACs that have been active throughout the 2019 filing year. I will use sentiment analysis to create a visualization between both Republican and Democratic PAC names. I will also several classification trees to see if I can accurately predict the party of a particular PAC. 
+
+I intend to use currently available data that is available through the Federal Election Commission’s website . This data can be downloaded as a CSV file through the website. I intend to use more than one CSV which altogether will include key variables including committee name, committee ID, registered party, total expenditures, total contributions, and state. 
+
+Additionally, for this project, I may plan to seek out additional FEC data through Data.gov  using their API. This requires registering through the Data.gov website and acquiring an API key. The legal limitations of this API require that I not exceed 1,000 requests every hour and that this information not be used to construct commercial solicitation lists for any candidate/committee. This project is within the legal limits set forth by the FEC API’s legal guidance. 
+
+For this project, I plan to use several data wrangling functions to merge CSV files together, exclude variables that may not be important, rearrange variables, and filter out observations that are not related to PACs. Most of these functions will rely on the tidyverse package. Next, using the tidytext package, I will use tokenization to parse out each word of the PAC name. While being sure to exclude stopwords and be cautious of stemming, I plan to visualize the most commonly used words for each party’s PAC names while also showing how each party compares to the other in terms of positive or negative names. 
+
+The second part of the project will be incorporating classification trees in order to predict with some accuracy what party a PAC is from based on variables such as total expenditures, total contributions, and the state that they’re registered from.
+
+Success to me is defined by several measures including:
+
+1. I finish this project, without regrets/concerns/adjustments, by December 14th, 2019 at 9:00pm and that I’m proud of the final submission
+
+2. This project contains valuable information regarding federal PACs in 2019 that can be used as an easily accessible resource for anyone not accustomed to the vocabulary of campaign finance. In other words, anyone who doesn’t work in the campaign finance world could easily look at this final project and understand what it’s saying and its importance to the upcoming election
+
+3. The final product is a document that I can show my supervisor, who is familiar with campaign finance data, and that he would easily be able to understand the importance of such a document
+
+4. At the end of this project, I can say with a reasonable degree of certainty:
+
+a. Which party during the 2019 filing year has a more negative sentiment in  consideration with PACs
+
+b. Which party a PAC is connected with given a reasonable number of important factors (i.e. expenditures, contributions, state, etc.)
+
