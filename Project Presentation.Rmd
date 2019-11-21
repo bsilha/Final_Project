@@ -2,12 +2,23 @@
 title: "Project Presentation"
 author: "Bridget Silha"
 date: "11/20/2019"
-output:
-  beamer_presentation:
-    theme: "Szeged"
-    colortheme: "default"
-    fonttheme: "structurebold"
+output: ioslides_presentation
 ---
 
-##Problem Statement and Background
+# Problem statement and background
+
+## What is the FEC?
+
+## 
+
+
+# Methods I explored/considered
+
+## 
+
+# Methods/tools I Used
+
+# Results
+
+# Lessons learned
 
