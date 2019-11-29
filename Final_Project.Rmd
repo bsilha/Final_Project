@@ -58,30 +58,71 @@ data_raw <- data_raw %>%
 ```{r}
 #Read CVS data in
 total_fec_committee_party_and_pac <- read_csv("committees.csv")
-committee_summary <- read_csv("committee_summary_2020.csv")
+pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
 
 ##Clean Data
-
-#Filter by party 
-total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
-  filter(party != "NA") 
-
-total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
-  filter(party == "DEM" | party == "REP" | party == "CRV" | party == "LIB" | party == "IAP" | party == "REF")
-
-#Cut down variables
-total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
-  select(-cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name)
+#https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
 
 #Select PAC Committee Types
 total_fec_committee_party_and_pac <- total_fec_committee_party_and_pac %>% 
   filter(committee_type == "N" | committee_type == "O" | committee_type == "Q" | committee_type == "V" | committee_type == "W")
 
 #Join on Committee ID
-new_data <- left_join(committee_summary, total_fec_committee_party_and_pac, by=c("CMTE_ID" = "committee_id"))
+new_data_2018 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"))
 
-colnames(new_data)
+#Cut down variables
+new_data_2018 <- new_data_2018 %>% 
+  select(-cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name)
+
+new_data_2018 <- new_data_2018 %>% 
+  select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST)
+
+skimr::skim(new_data_2018)
+```
+
+```{r}
+#Read CVS data in
+total_fec_committee_party_and_pac <- read_csv("committees.csv")
+pac_financial_info_2020 <- read_csv("committee_summary_2020.csv")
+
+##Clean Data
+#https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
+
+#Join on Committee ID
+new_data_2020 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2020, by=c("committee_id" = "CMTE_ID"))
+
+#Cut down new variables
+new_data_2020 <- new_data_2020 %>% 
+  select(-cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name)
+
+new_data_2020 <- new_data_2020 %>% 
+  select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST)
 
 
+skimr::skim(new_data_2020)
+```
+
+
+```{r}
+#Bind 2018 and 2020 datasets together
+new_data <- bind_rows(new_data_2018, new_data_2020)
+
+#Filter for party type
+new_data <- new_data %>% 
+  filter(party == "DEM" | party == "REP" | party == "CRV" | party == "lIB" | party == "IAP" | party == "REF")
+
+#Filter for committee type
+new_data <- new_data %>% 
+  filter(CMTE_TP == "N" | CMTE_TP == "O" | CMTE_TP == "Q" | CMTE_TP == "V" | CMTE_TP == "W")
+```
+
+
+
+```{r}
+#split into training and test data
+train_dat = dat %>% filter(date < as.Date("2017-06-01"))
+test_dat = dat %>% filter(date >= as.Date("2017-06-01"))
+
+dim(train_data)
 ```
 
