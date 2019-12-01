@@ -16,13 +16,13 @@ tinytex::install_tinytex()
 ```{r}
 #Read CVS data in
 total_fec_committee_party_and_pac <- read_csv("committees.csv")
-pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
+##DATA DESCRIPTION: https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
 
-##Clean Data
-#https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
+pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
+##DATA DESCRIPTION: 
 
 #Join on Committee ID
-new_data_2018 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"))
+new_data_2018 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"), c("name" = "CMTE_NM"))
 
 #Cut down variables
 new_data_2018 <- new_data_2018 %>% 
@@ -30,6 +30,10 @@ new_data_2018 <- new_data_2018 %>%
 
 new_data_2018 <- new_data_2018 %>% 
   select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST, -COH_BOY, -COH_COY, -name)
+
+#Committee name and commmitte id as first variables
+new_data_2018 <- new_data_2018 %>% 
+  select (CMTE_NM, committee_id, everything())
 
 skimr::skim(new_data_2018)
 ```
@@ -43,7 +47,7 @@ pac_financial_info_2020 <- read_csv("committee_summary_2020.csv")
 #https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
 
 #Join on Committee ID
-new_data_2020 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2020, by=c("committee_id" = "CMTE_ID"))
+new_data_2020 <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"), c("name" = "CMTE_NM"))
 
 #Cut down new variables
 new_data_2020 <- new_data_2020 %>% 
@@ -52,6 +56,10 @@ new_data_2020 <- new_data_2020 %>%
 new_data_2020 <- new_data_2020 %>% 
   select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST, -COH_BOY, -COH_COY, -name)
 
+#Committee name and commmitte id as first variables
+new_data_2020 <- new_data_2020 %>% 
+  select (CMTE_NM, committee_id, everything())
+
 
 skimr::skim(new_data_2020)
 ```
@@ -59,15 +67,19 @@ skimr::skim(new_data_2020)
 
 ```{r}
 #Bind 2018 and 2020 datasets together
-new_data <- bind_rows(new_data_2018, new_data_2020)
+new_data <- union(new_data_2018, new_data_2020)
 
 #Filter for party type
-new_data <- new_data %>% 
-  filter(party == "DEM" | party == "REP" | party == "CRV" | party == "lIB" | party == "IAP" | party == "REF")
+#new_data <- new_data %>% 
+ # filter(party == "DEM" | party == "REP" | party == "CRV" | party == "lIB" | party == "IAP" | party == "REF")
 
-#Filter for committee type
+#Filter for committee type -- only PACs
 new_data <- new_data %>% 
   filter(CMTE_TP == "N" | CMTE_TP == "O" | CMTE_TP == "Q" | CMTE_TP == "V" | CMTE_TP == "W")
+
+#check to see that committee_ids are unique for all observations
+skimr::skim(new_data)
+
 ```
 
 
@@ -75,8 +87,8 @@ new_data <- new_data %>%
 range(new_data$first_file_date)
 
 #split into training and test data
-train_data = new_data %>% filter(first_file_date < as.Date("2014-01-01"))
-test_data = new_data %>% filter(first_file_date >= as.Date("2014-01-01"))
+train_data = new_data %>% filter(first_file_date < as.Date("2017-01-01"))
+test_data = new_data %>% filter(first_file_date >= as.Date("2017-01-01"))
 
 # Proporation in the training data 
 round(nrow(train_data)/nrow(new_data),3)
@@ -98,17 +110,17 @@ train_data %>% nrow()
 ```
 
 ```{r}
-#Coverage over states vs. initial filing date
+#Coverage over states vs. initial filing date grouped by committee type
 train_data %>% 
-  ggplot(aes(first_file_date, CMTE_ST)) +
-  geom_point(show.legend = F) +
-  coord_flip()
+  ggplot(aes(first_file_date, CMTE_ST, color = factor(CMTE_TP))) +
+  geom_point(show.legend = T) +
+  geom_vline(xintercept = as.numeric(as.Date("2010-01-21")))
+#Line to show when Citizens United became official
 
 #Mapped committee vs. contributions
 train_data %>% 
-  ggplot(aes(TTL_CONTB, committee_id)) +
-  geom_jitter(show.legend = F) +
-  coord_flip()
+  ggplot(aes(TTL_CONTB, CMTE_ST)) +
+  geom_jitter(show.legend = F)
 
 #Mapped committee vs. expenditures
 train_data %>% 
