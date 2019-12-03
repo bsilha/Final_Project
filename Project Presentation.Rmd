@@ -2,23 +2,26 @@
 title: "Project Presentation"
 author: "Bridget Silha"
 date: "11/20/2019"
-output: ioslides_presentation
+output:
+  slidy_presentation:
+    theme: yeti
 ---
 
-# Problem statement and background
+# Problem Statement and Background
 
-## What is the FEC?
+- What is the FEC?
+- What are PACs?
+- Are there 
 
-## 
+# Problem Statement and Background
 
+- 
 
-# Methods I explored/considered
+# Methods I Explored/Considered
 
-## 
-
-# Methods/tools I Used
+# Methods/Tools I Used
 
 # Results
 
-# Lessons learned
+# Lessons Learned
 
