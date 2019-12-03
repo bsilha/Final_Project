@@ -3,25 +3,52 @@ title: "Project Presentation"
 author: "Bridget Silha"
 date: "11/20/2019"
 output:
-  slidy_presentation:
-    theme: yeti
+  ioslides_presentation:
+    incremental: true
+    font: 20
 ---
 
-# Problem Statement and Background
+## Problem Statement and Background
 
-- What is the FEC?
-- What are PACs?
-- Are there 
+- The Basics:
+  - What is the FEC?
+  - What is the difference between PACs and SuperPACs?
+  
+## Problem Statement and Background
 
-# Problem Statement and Background
+- The Questions:
+  - Can you predict what kind of PAC/SuperPAC you get based off of variables such as:
+    - State?
+    - Total Contributions?
+    - Total Expenditures?
+  - Is there a theme with PAC names?
 
+## Methods I Explored/Considered
+
+1. Classification to find registered party
+  - Problem: Not all PACs register with a party
+2. Sentiment Analysis
+  - Problem: Not all PACs register with a party 
+
+## Methods/Tools I Used (Thus Far)
+
+1. Merged Excel files together and cleaned data
+
+## Methods/Tools I Used (Thus Far)
+
+2. Analyzed PACs through the state that they're registered in
+
+## Methods/Tools I Used (Thus Far)
+
+3. Analyzed PACs through their "PAC qualification status"
+
+## Results
+
+- PACs first filing date based on the state they are registered in and their PAC qualification status
+
+## Lessons Learned
+
+- Campaign finance is confusing!
+- Data wrangling is 99.99% of this project so far
+- SuperPACs have boomed in popularity since Citizens United case
 - 
-
-# Methods I Explored/Considered
-
-# Methods/Tools I Used
-
-# Results
-
-# Lessons Learned
-
