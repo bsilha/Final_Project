@@ -1,11 +1,10 @@
 ---
 title: "Project Presentation"
 author: "Bridget Silha"
-date: "11/20/2019"
+date: "12/04/2019"
 output:
-  ioslides_presentation:
-    incremental: true
-    font: 20
+  beamer_presentation:
+    theme: "Hannover"
 ---
 
 ## Problem Statement and Background
@@ -13,29 +12,42 @@ output:
 - The Basics:
   - What is the FEC?
   - What is the difference between PACs and SuperPACs?
+  - Where am I getting all this data from?
   
 ## Problem Statement and Background
 
 - The Questions:
-  - Can you predict what kind of PAC/SuperPAC you get based off of variables such as:
+  - Are SuperPACs as big of a problem as everyone says that they are?
+  - Can you predict what kind of PAC you get based off of variables such as:
     - State?
     - Total Contributions?
     - Total Expenditures?
-  - Is there a theme with PAC names?
+  - Can I use topic modeling to group PAC names? Will I end up with "concrete" topics?
   
 ## Problem Statement and Background
 
 - The dataset and its variables
 
-![alt text](new_data.png){width=750px}
+![](new_data.png){width=400px}
 
-## Methods I Explored/Considered
+## Just for fun...
 
-1. Classification to find registered party
-  - What I thought about doing: using 
+![](example_a.png){width=300px}
+![](example_b.png){width=300px}
+
+![](example_c.png){width=300px}
+
+![](example_d.png){width=300px}
+
+![](example_e.png){width=300px}
+
+## Methods I Explored/Considered (Fails!)
+
+1. Classification
+  - What I thought about doing: using variables to help the data learn how to classify PACs and their affiliated party
   - Problem: Not all PACs register with a party
 2. Sentiment Analysis
-  - What I thought about doing: 
+  - What I thought about doing: Grouping PACs by their party and then running sentiment analysis to see which party was the most "positive" or "negative"
   - Problem: Not all PACs register with a party 
 
 ## Methods/Tools I Used (Thus Far)
@@ -43,22 +55,22 @@ output:
 1. Merged Excel files together and cleaned data
 2. Analyzed PACs through the state that they're registered in
 
-![](NUMBER OF PACS BY STATE.png){width=750px}
+![](NUMBER_OF_PACS_BY_STATE.png){width=400px}
 
 ## Methods/Tools I Used (Thus Far)
 
 3. Analyzed PACs through their "PAC qualification status" over time
 
-![](FIRST_FILE_BY_STATE.png){width=750px}
+![](FIRST_FILE_BY_STATE.png){width=400px}
 
 ## Results
 
 - SuperPACs have boomed in popularity since Citizens United case
-- The regular suspects (i.e. DC, VA, NY, CA) have the most number of PACs registered within them with a healthy portion of them being "regular" PACS, not SuperPACs
-- 
+- The regular suspects (i.e. DC, VA, NY, CA) have the most number of PACs registered within them
+- A healthy portion of registered PACs are "regular" PACS, not SuperPACs
 
 ## Lessons Learned
 
 - Campaign finance is confusing!
-- Data wrangling is 99.99% of this project so far
-- SuperPACs have boomed in popularity since Citizens United case
+- Data wrangling is 99.99% of this project so far and human error sucks
+- RColorBrewer package is amazing
