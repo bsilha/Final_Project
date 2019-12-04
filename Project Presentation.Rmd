@@ -22,33 +22,43 @@ output:
     - Total Contributions?
     - Total Expenditures?
   - Is there a theme with PAC names?
+  
+## Problem Statement and Background
+
+- The dataset and its variables
+
+![alt text](new_data.png){width=750px}
 
 ## Methods I Explored/Considered
 
 1. Classification to find registered party
+  - What I thought about doing: using 
   - Problem: Not all PACs register with a party
 2. Sentiment Analysis
+  - What I thought about doing: 
   - Problem: Not all PACs register with a party 
 
 ## Methods/Tools I Used (Thus Far)
 
 1. Merged Excel files together and cleaned data
-
-## Methods/Tools I Used (Thus Far)
-
 2. Analyzed PACs through the state that they're registered in
 
+![](NUMBER OF PACS BY STATE.png){width=750px}
+
 ## Methods/Tools I Used (Thus Far)
 
-3. Analyzed PACs through their "PAC qualification status"
+3. Analyzed PACs through their "PAC qualification status" over time
+
+![](FIRST_FILE_BY_STATE.png){width=750px}
 
 ## Results
 
-- PACs first filing date based on the state they are registered in and their PAC qualification status
+- SuperPACs have boomed in popularity since Citizens United case
+- The regular suspects (i.e. DC, VA, NY, CA) have the most number of PACs registered within them with a healthy portion of them being "regular" PACS, not SuperPACs
+- 
 
 ## Lessons Learned
 
 - Campaign finance is confusing!
 - Data wrangling is 99.99% of this project so far
 - SuperPACs have boomed in popularity since Citizens United case
-- 
