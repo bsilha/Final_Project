@@ -7,7 +7,7 @@ output:
     latex_engine: xelatex
 ---
 
-```{r}
+```{r, cache = TRUE}
 require(tidyverse)
 tinytex::install_tinytex()
 ```
@@ -80,6 +80,8 @@ new_data <- new_data %>%
 #check to see that committee_ids are unique for all observations
 skimr::skim(new_data)
 
+new_data %>% glimpse()
+
 ```
 
 
@@ -111,11 +113,27 @@ train_data %>% nrow()
 
 ```{r}
 #Coverage over states vs. initial filing date grouped by committee type
+
+# Install
+install.packages("RColorBrewer")
+# Load
+library ("RColorBrewer")
+
 train_data %>% 
   ggplot(aes(first_file_date, CMTE_ST, color = factor(CMTE_TP))) +
   geom_point(show.legend = T) +
-  geom_vline(xintercept = as.numeric(as.Date("2010-01-21")))
-#Line to show when Citizens United became official
+  geom_vline(xintercept = as.numeric(as.Date("2010-01-21"))) +
+  #Line to show when Citizens United became official
+  scale_fill_discrete(name="PAC Type",
+                         breaks=c("O", "N", "Q", "V", "W"),
+                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  ggtitle("PAC Types Over Time By State") +
+  xlab ("First File Date") +
+  ylab ("State of Registration")
 
 #Mapped committee vs. contributions
 train_data %>% 
@@ -138,6 +156,35 @@ train_data %>%
 train_data %>% 
   ggplot(aes(CMTE_TP) ) +
   geom_bar(show.legend = TRUE)
+
+#geographical representation of PACs
+
+install.packages("maps")
+library(maps)
+
+us_states <- map_data("state")
+
+us_states
+
+ggplot(data = us_states,
+       mapping = aes(x = long, y = lat, group = group)) +
+  geom_polygon(color = "gray", size = 0.05) +
+  coord_equal()
+
+train_data %>% 
+  ggplot(aes(CMTE_ST, fill = CMTE_TP) ) +
+  geom_bar(show.legend = TRUE) +
+  coord_flip() +
+    scale_fill_discrete(name="PAC Type",
+                         breaks=c("O", "N", "Q", "V", "W"),
+                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  ggtitle("Number of PACs by State") +
+  xlab ("# of PACs") +
+  ylab ("State of Registration")
 
 ```
 
