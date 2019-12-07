@@ -165,44 +165,11 @@ train_data %>%
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
                       labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  ggtitle("PAC Types Over Time By State") +
+  ggtitle("PAC Filing Over Time by State and PAC Type") +
   xlab ("First File Date") +
   ylab ("State of Registration")
 
-#Mapped committee vs. contributions
-train_data %>% 
-  ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(CMTE_TP))) +
-    scale_fill_discrete(name="PAC Type",
-                         breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  scale_colour_manual(name="PAC Type",
-                      breaks=c("N", "O", "Q", "V", "W"), 
-                      values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  scale_x_log10() +
-  geom_jitter(show.legend = T)
-
-
-#Mapped committee vs. expenditures
-train_data %>% 
-  ggplot(aes(TTL_DISB, CMTE_ST, color = factor(CMTE_TP))) +
-    scale_fill_discrete(name="PAC Type",
-                         breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  scale_colour_manual(name="PAC Type",
-                      breaks=c("N", "O", "Q", "V", "W"), 
-                      values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  scale_x_log10() +
-  geom_jitter(show.legend = T)
-
 ```
-
-
-Conclusions:
-- Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not SuperPACs
-- States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
-- It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
 
 
 
@@ -233,33 +200,42 @@ train_data1 %>%
   facet_wrap(~var,scales="free",ncol=3) +
   coord_flip()
 
+#PAC Filing over Time by PAC Type
 train_data1 %>% 
-  select(last_f1_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
+  ggplot(aes(first_file_date, color = CMTE_TP)) +
+  geom_bar() +
   stat_count(width = 10) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
+  scale_fill_discrete(name="PAC Type",
+                         breaks=c("N", "O", "Q", "V", "W"),
+                         labels = c("PAC - Nonqualified", "Independent expenditure-only (Super PACs)", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("PAC - Nonqualified", "Independent expenditure-only (Super PACs)" , "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  xlab("Date of First Filing with FEC") +
+  ylab("Number of PACs") +
+  ggtitle("PAC Filing Over Time by PAC Type") +
+  geom_vline(xintercept = as.numeric(as.Date("2010-01-21"))) +
+  ggthemes::theme_tufte()
 
-train_data1 %>% 
-  select(last_file_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  stat_count(width = 10) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
+
 
 ```
 
+
+Conclusions:
+- Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not SuperPACs
+- States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
+- It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
+- Since Citizens United case, the "first filing date" of SuperPACs and PAC - Nonqualified committees have increased exponentially
+- The Citizens United case seems to indicate the start of the majority of "first filing" dates for SuperPACs
 
 ```{r, echo = FALSE}
 ## -------------------------------- Pre-Process the Data: Create new SuperPAC dummy variable ----------------------------##
 
 # Add new variable to both training and test dataset
 # if Superpac, Then SuperPAC_yes = 1
-train_data1 <- train_data %>% 
+train_data1 <- train_data1 %>% 
   mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
 
 test_data1 <- test_data %>% 
@@ -289,18 +265,75 @@ test_data2 <- test_data1 %>%
 #Visualize
 train_data2 %>% 
   ggplot(aes(TTL_CONTB)) +
-  geom_histogram()
+  geom_histogram(binwidth = 1)
+
+train_data2 %>% 
+  ggplot(aes(TTL_DISB)) +
+  geom_histogram(binwidth = 1)
+
+train_data2 %>% 
+  ggplot(aes(TTL_RECEIPTS)) +
+  geom_histogram(binwidth = 1)
+
+#Mapped STATE vs. contributions
+contb <- train_data2 %>% 
+  ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(CMTE_TP))) +
+    scale_fill_discrete(name="PAC Type",
+                         breaks=c("O", "N", "Q", "V", "W"),
+                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  geom_jitter(show.legend = F) +
+  ggthemes::theme_tufte()
+
+
+#Mapped STATE vs. expenditures
+disb <- train_data2 %>% 
+  ggplot(aes(TTL_DISB, CMTE_ST, color = factor(CMTE_TP))) +
+    scale_fill_discrete(name="PAC Type",
+                         breaks=c("O", "N", "Q", "V", "W"),
+                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  geom_jitter(show.legend = T) +
+  ggthemes::theme_tufte()
+
+#Mapped STATE vs. expenditures
+receipt <- train_data2 %>% 
+  ggplot(aes(TTL_RECEIPTS, CMTE_ST, color = factor(CMTE_TP))) +
+    scale_fill_discrete(name="PAC Type",
+                         breaks=c("O", "N", "Q", "V", "W"),
+                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  scale_colour_manual(name="PAC Type",
+                      breaks=c("N", "O", "Q", "V", "W"), 
+                      values = c((brewer.pal(5,"Set1"))),
+                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+  geom_jitter(show.legend = F) +
+  ggthemes::theme_tufte()
+
 ```
 
 ```{r, echo = FALSE}
 ## -------------------------------- Pre-Process the Data: Create recipe and apply to test and training data ----------------------------##
+
+# Turn ORG_TP and party into factors
+train_data2$ORG_TP <- as.factor (train_data2$ORG_TP)
+train_data2$party <- as.factor (train_data2$party)
+
 #Create recipe
 rcp <- 
-  recipe(SuperPAC_yes ~ party + first_file_date + last_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>% 
-  step_bagimpute(ORG_TP, party, options = list(nbagg = 5, keepX = FALSE)) %>% 
-  step_dummy(all_nominal(),-all_outcomes()) %>%
-  step_range(all_numeric()) %>% 
-  step_rollimpute(all_numeric(), window = 3) %>% # Normalize scale
+  recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>% 
+  step_dummy(all_nominal(),-all_outcomes()) %>% 
+  prep()
+
+rcp <-
+  recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>%
+  step_dummy(all_nominal()) %>% 
+    step_range(all_numeric()) %>% 
   prep()
 
 #rm(rcp)
@@ -315,6 +348,8 @@ head(train_data_processed)
 glimpse(train_data_processed)
 
 skimr::skim(train_data_processed)
+
+#####ORG_TP and party are missing -- both characters
 ```
 
 ```{r}
