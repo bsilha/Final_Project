@@ -1,7 +1,7 @@
 ---
 title: "Final Project"
 author: "Bridget Silha"
-date: "11/7/2019"
+date: "12/14/2019"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -14,7 +14,7 @@ require(tidyverse)
 
 
 ```{r, warning=FALSE}
-## ----------------------------------- Reading in data ---------------------------------##
+## -------------------------------------- Reading in data --------------------------------------------##
 
 #Read CVS data in
 total_fec_committee_party_and_pac <- read_csv("committees.csv")
@@ -24,6 +24,20 @@ pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
 ##DATA DESCRIPTION: https://www.fec.gov/campaign-finance-data/committee-summary-file-description/ 
 ```
 
+# Introduction
+
+- What is the aim of this project? 
+  - Summarize the problem
+  - State your goals
+– What do you do in this report?
+  - offer a roadmap of the project
+  
+
+# Problem Statement and Background
+
+– Give a clear and complete statement of the problem and/or aim of your analysis.
+– Include a brief summary of any related work that has tried to tackle a project similar to
+yours (i.e. a light literature review)
 
 ```{r}
 ## ----------------------------------- Combining CVS and cleaning dataset ---------------------------------##
@@ -56,6 +70,12 @@ new_data %>% glimpse()
 
 ```
 
+# Data
+
+– Where does the data come from?
+– What is the unit of observation?
+– What are the variables of interest?
+– What steps did you take to wrangle the data?
 
 ```{r}
 ## --------------------- Splitting data into training and test datasets -------------------##
@@ -100,8 +120,15 @@ train_data %>%
   theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
+# Analysis 
 
-Conlusions:
+– Describe the methods/tools you explored in your project.
+– Outline in detail our entire analysis.
+  - Justify the tools/methods that you used.
+  - Assume the reader is smart but doesn’t know R/Machine Learning well. That is, be
+crystal clear about what you’re doing and why.
+
+## Conlusions:
 - There's good, random distribution of some variables such as ORG_TP and CMTE_FILING_FREQ
 - There are many multiple errors in the party_full variable where human error might have contributed to similar entries (e.g. "None", "Unknown", "NA")
 
@@ -139,7 +166,7 @@ train_data %>%
   coord_flip()
 ```
 
-Conlusions:
+## Conlusions:
 - There's a peak around late 2019 for last_f1_date
 - last_file_date is consistant with committee filing frequency
 - There's a peak around 2008 for times when committees first filed with the FEC
@@ -223,7 +250,7 @@ train_data1 %>%
 ```
 
 
-Conclusions:
+## Conclusions:
 - Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not SuperPACs
 - States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
 - It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
@@ -457,7 +484,18 @@ pred <- predict(xxxxxx,newdata = test_data_processed)
 confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 ```
 
+# Results
 
+- Give a detailed summary of your results.
+– Present your results clearly and concisely.
+– Please use visualizations and tables whenever possible.
+
+# Discussion
+
+- Speak on the “success” of your project (as defined in your proposal).
+  - Did you achieve what you set out to do? If not why?
+– What tools/methods did you consider but not use in the final analysis?
+– How would you expand the analysis if given more time?
 
 
 
