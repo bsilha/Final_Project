@@ -415,6 +415,42 @@ receipt
 
 ```
 
+```{r}
+###### ----------------------------- NATHAN'S FIX ---------------------------------######
+
+# Turn party NAs into an actual factor
+train_data2 <- train_data2 %>% 
+  mutate(party = ifelse(party == "DEM" | party == "REP" , party, "NONE"),
+         party = ifelse(is.na(party), "NONE", party))
+
+#Turn ORG_TP into an actual factor
+train_data2 <- train_data2 %>% 
+  mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
+         ORG_TP = ifelse(is.na(ORG_TP), "NONE", ORG_TP))
+
+# CONVERT ALL CHARACTERS TO FACTOR
+train_data2 <- train_data2 %>% mutate_if(is.character, as.factor)
+
+x <- train_data2 %>% 
+  select(SuperPAC_yes, party, first_file_date, last_file_date, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, TTL_CONTB, TTL_RECEIPTS, TTL_DISB, ORG_TP) %>% 
+  mutate(SuperPAC_yes = as.factor(SuperPAC_yes),
+         SuperPAC_yes = recode(SuperPAC_yes, `0` = "no", `1` = "yes"))
+  
+
+rcp <- 
+  recipe(SuperPAC_yes ~  .,x) %>% 
+  step_knnimpute(TTL_CONTB, TTL_RECEIPTS, neighbors = 5) %>% 
+  step_dummy(all_nominal(),-all_outcomes()) %>% # Why exclude outcomes?
+  step_range(all_numeric()) %>%  # Normalize scale
+  prep()
+
+train_data_processed <- bake(rcp,x)
+
+train_data_processed <- train_data_processed %>% 
+  janitor::clean_names()
+```
+
+
 ```{r, echo = FALSE}
 ###### ----------------------------- NATHAN'S FIX ---------------------------------######
 
@@ -427,9 +463,6 @@ train_data2 <- train_data2 %>%
 train_data2 <- train_data2 %>% 
     mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
          ORG_TP = ifelse(is.na(ORG_TP), "NONE", ORG_TP))
-
-# CONVERT ALL CHARACTERS TO FACTOR
-train_data2 <- train_data2 %>% mutate_if(is.character, as.factor)
 
 # CONVERT RESPONSE VARIABLE TO FACTOR
 train_data2$SuperPAC_yes <- as.factor(train_data2$SuperPAC_yes)
@@ -451,8 +484,10 @@ rcp <-
 train_data_processed <- bake(rcp,train_data2)
 test_data_processed <- bake(rcp,test_data2) 
 
-# CONVERT RESPONSE VARIABLE TO FACTOR 
-train_data_processed$SuperPAC_yes <- as.factor(train_data_processed$SuperPAC_yes)
+# RENAME LEVELS OF SUPERPAC_YES
+train_data_processed <- train_data_processed %>%
+  mutate(SuperPAC_yes = as.factor(SuperPAC_yes),
+         SuperPAC_yes = recode(SuperPAC_yes, `0` = "no", `1` = "yes"))
 
 # CHECK THAT THIS ALL WORKED
 skimr::skim(train_data_processed)
@@ -578,13 +613,6 @@ confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
   - Did you achieve what you set out to do? If not why?
 – What tools/methods did you consider but not use in the final analysis?
 – How would you expand the analysis if given more time?
-
-
-
-
-
-
-
 
 
 
