@@ -47,7 +47,7 @@ new_data <- right_join(total_fec_committee_party_and_pac, pac_financial_info_201
 
 #Cut down variables
 new_data <- new_data %>% 
-  select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST, -COH_BOY, -COH_COY, -name, -cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name, -party_full, -candidate_ids, -FEC_ELECTION_YR,)
+  select (-Link_Image, -CMTE_ST1:-CMTE_CITY, -CMTE_ZIP:-CAND_ID, -INDV_CONTB:-OTH_CMTE_CONTB, -TRANF_FROM_OTHER_AUTH_CMTE:-OTHER_RECEIPTS, -TRANF_TO_OTHER_AUTH_CMTE:-OTHER_DISB, -NET_CONTB:-TTL_COMMUNICATION_COST, -COH_BOY, -COH_COY, -name, -cycles, -treasurer_name, -filing_frequency:-affiliated_committee_name, -party_full, -candidate_ids, -FEC_ELECTION_YR, -CMTE_TP)
 
 #Committee name and commmitte id as first variables
 new_data <- new_data %>% 
@@ -57,7 +57,7 @@ skimr::skim(new_data)
 
 #Filter for committee type -- only PACs
 new_data <- new_data %>% 
-  filter(CMTE_TP == "N" | CMTE_TP == "O" | CMTE_TP == "Q" | CMTE_TP == "V" | CMTE_TP == "W")
+  filter(committee_type == "N" | committee_type == "O" | committee_type == "Q" | committee_type == "V" | committee_type == "W")
 
 #Filter out terminated committees
 new_data <- new_data %>% 
@@ -76,7 +76,7 @@ new_data %>% glimpse()
 # if Superpac, Then SuperPAC_yes = 1
 
 new_data <- new_data %>% 
-  mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
+  mutate(SuperPAC_yes = recode(committee_type, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0, .default = 0))
 
 skimr::skim(new_data)
 
@@ -121,7 +121,7 @@ skimr::skim(train_data)
 
 #Visualize distribution of categorical variables
 train_data %>% 
-  select(CMTE_DSGN, CMTE_FILING_FREQ, CMTE_TP, ORG_TP) %>% 
+  select(CMTE_DSGN, CMTE_FILING_FREQ, committee_type, ORG_TP) %>% 
   gather(var,val) %>% 
   ggplot(aes(val)) +
   geom_bar() +
@@ -184,7 +184,7 @@ train_data %>%
   coord_flip()
 ```
 
-## Conlusions:
+## Conclusions:
 - There's a peak around late 2019 for last_f1_date
 - last_file_date is consistant with committee filing frequency
 - There's a peak around 2008 for times when committees first filed with the FEC
@@ -199,7 +199,7 @@ require ("RColorBrewer")
 
 #Coverage over states vs. initial filing date grouped by committee type
 new_data %>% 
-  ggplot(aes(first_file_date, CMTE_ST, color = factor(CMTE_TP))) +
+  ggplot(aes(first_file_date, CMTE_ST, color = factor(committee_type))) +
   geom_point(show.legend = T) +
   geom_vline(xintercept = as.numeric(as.Date("2010-01-21"))) +
   #Line to show when Citizens United became official
@@ -247,7 +247,7 @@ train_data1 %>%
 
 #PAC Filing over Time by PAC Type
 train_data1 %>% 
-  ggplot(aes(first_file_date, color = CMTE_TP)) +
+  ggplot(aes(first_file_date, color = committee_type)) +
   geom_bar() +
   stat_count(width = 10) +
   scale_fill_discrete(name="PAC Type",
@@ -327,7 +327,7 @@ train_data2 %>%
 ## -------------------------------- Pre-Process the Data: Visualize log(money) variables ----------------------------##
 #Mapped STATE vs. contributions
 contb <- train_data2 %>% 
-  ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(CMTE_TP))) +
+  ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
                          labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
@@ -343,7 +343,7 @@ contb
 
 #Mapped STATE vs. expenditures
 disb <- train_data2 %>% 
-  ggplot(aes(TTL_DISB, CMTE_ST, color = factor(CMTE_TP))) +
+  ggplot(aes(TTL_DISB, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
                          labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
@@ -359,7 +359,7 @@ disb
 
 #Mapped STATE vs. expenditures
 receipt <- train_data2 %>% 
-  ggplot(aes(TTL_RECEIPTS, CMTE_ST, color = factor(CMTE_TP))) +
+  ggplot(aes(TTL_RECEIPTS, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
                          labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
@@ -373,6 +373,9 @@ receipt <- train_data2 %>%
 receipt
 
 ```
+
+## Conclusions:
+- 
 
 ```{r, echo = FALSE}
 ## -------------------------------- Pre-Process the Data: Create recipe and apply to test and training data ----------------------------##
@@ -528,7 +531,7 @@ dotplot(resamples(mod_list))
 ```{r}
 ## ------------------------------------- Predictive Performance -------------------------------------##
 
-pred <- predict(xxxxxx,newdata = test_data_processed)
+pred <- predict(xxxxx,newdata = test_data_processed)
 confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 ```
 
