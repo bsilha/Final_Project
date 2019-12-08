@@ -40,7 +40,7 @@ pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
 yours (i.e. a light literature review)
 
 ```{r}
-## ----------------------------------- Combining CVS and cleaning dataset ---------------------------------##
+## ----------------------------------- Cleaning data: Combining CVS and cleaning dataset ---------------------------------##
 
 #Bind 2018 committee information and financial information together
 new_data <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"), c("name" = "CMTE_NM"))
@@ -70,6 +70,19 @@ new_data %>% glimpse()
 
 ```
 
+```{r}
+
+# Add new variable to dataset
+# if Superpac, Then SuperPAC_yes = 1
+
+new_data <- new_data %>% 
+  mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
+
+skimr::skim(new_data)
+
+```
+
+
 # Data
 
 – Where does the data come from?
@@ -84,14 +97,19 @@ range(new_data$first_file_date)
 range(new_data$last_file_date)
 
 #split into training and test data
-train_data = new_data %>% filter(first_file_date < as.Date("2010-01-12"))
-test_data = new_data %>% filter(first_file_date >= as.Date("2010-01-12"))
+index = createDataPartition(new_data$SuperPAC_yes,p=.8,list=F) 
+train_data = new_data[index,] # Use 80% of the data as training data 
+test_data = new_data[-index,] # holdout 20% as test data 
 
 # Proporation in the training data 
 round(nrow(train_data)/nrow(new_data),3)
 
 # Proporation in the test data 
 round(nrow(test_data)/nrow(new_data),3)
+
+#number of observations in training data
+dim(train_data)
+dim(test_data)
 
 ```
 
@@ -180,7 +198,7 @@ train_data %>%
 require ("RColorBrewer")
 
 #Coverage over states vs. initial filing date grouped by committee type
-train_data %>% 
+new_data %>% 
   ggplot(aes(first_file_date, CMTE_ST, color = factor(CMTE_TP))) +
   geom_point(show.legend = T) +
   geom_vline(xintercept = as.numeric(as.Date("2010-01-21"))) +
@@ -262,11 +280,11 @@ train_data1 %>%
 
 # Add new variable to both training and test dataset
 # if Superpac, Then SuperPAC_yes = 1
-train_data1 <- train_data1 %>% 
-  mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
+#train_data1 <- train_data1 %>% 
+  #mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
 
-test_data1 <- test_data %>% 
-  mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
+#test_data1 <- test_data %>% 
+  #mutate(SuperPAC_yes = recode(CMTE_TP, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0))
 ```
 
 ```{r, echo = FALSE}
@@ -302,6 +320,11 @@ train_data2 %>%
   ggplot(aes(TTL_RECEIPTS)) +
   geom_histogram(binwidth = 1)
 
+
+```
+
+```{r, echo = FALSE}
+## -------------------------------- Pre-Process the Data: Visualize log(money) variables ----------------------------##
 #Mapped STATE vs. contributions
 contb <- train_data2 %>% 
   ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(CMTE_TP))) +
@@ -312,8 +335,10 @@ contb <- train_data2 %>%
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
                       labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  geom_jitter(show.legend = F) +
+  geom_jitter(show.legend = T) +
   ggthemes::theme_tufte()
+
+contb
 
 
 #Mapped STATE vs. expenditures
@@ -329,6 +354,9 @@ disb <- train_data2 %>%
   geom_jitter(show.legend = T) +
   ggthemes::theme_tufte()
 
+disb
+
+
 #Mapped STATE vs. expenditures
 receipt <- train_data2 %>% 
   ggplot(aes(TTL_RECEIPTS, CMTE_ST, color = factor(CMTE_TP))) +
@@ -339,23 +367,24 @@ receipt <- train_data2 %>%
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
                       labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
-  geom_jitter(show.legend = F) +
+  geom_jitter(show.legend = T) +
   ggthemes::theme_tufte()
+
+receipt
 
 ```
 
 ```{r, echo = FALSE}
 ## -------------------------------- Pre-Process the Data: Create recipe and apply to test and training data ----------------------------##
 
+
+###------------------------------------MY ORIGINAL ATTEMPT ------------------------------------- ####
+
 # Turn ORG_TP and party into factors
 train_data2$ORG_TP <- as.factor (train_data2$ORG_TP)
 train_data2$party <- as.factor (train_data2$party)
 
 #Create recipe
-rcp <- 
-  recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>% 
-  step_dummy(all_nominal(),-all_outcomes()) %>% 
-  prep()
 
 rcp <-
   recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>%
@@ -365,15 +394,34 @@ rcp <-
 
 #rm(rcp)
 
+###### ----------------------------- NATHAN'S FIX ---------------------------------######
+
+# KEEP ONLY THOSE IN RECIPES
+x <- train_data2 %>% select(SuperPAC_yes, party, first_file_date, last_file_date, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, TTL_CONTB, TTL_RECEIPTS, TTL_DISB, ORG_TP)
+
+# Turn party NAs into an actual factor
+x <- x %>% mutate(party = ifelse(is.na(party), "NONE", party))
+
+# CONVERT TO FACTOR
+x <- x %>% mutate_if(is.character, as.factor)
+
+#Create recipe
+rcp <-
+  recipe(
+    SuperPAC_yes ~ party + first_file_date + last_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP,
+    x
+  ) %>%
+#  step_bagimpute(ORG_TP, party, options = list(nbagg = 5, keepX = FALSE)) %>%
+  step_dummy(all_nominal(), -all_outcomes()) %>%
+  step_range(all_numeric(), -first_file_date, -last_file_date) %>% 
+  prep()
+#  step_rollimpute(all_numeric(), window = 3) %>% # Normalize scale
+
 # Apply the recipe to the training and test data
 train_data_processed <- bake(rcp,train_data2)
 test_data_processed <- bake(rcp,test_data2) 
 
 #Check
-head(train_data_processed)
-
-glimpse(train_data_processed)
-
 skimr::skim(train_data_processed)
 
 #####ORG_TP and party are missing -- both characters
