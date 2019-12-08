@@ -79,8 +79,6 @@ new_data %>% glimpse()
 ```{r}
 ## ----------------------------------- Cleaning data: Changing variables to Date using lubridate ---------------------------------##
 
-str(new_data)
-
 new_data$first_file_date <- as.Date(new_data$first_file_date, format = "%m/%d/%y")
 new_data$last_f1_date <- as.Date(new_data$last_f1_date, format = "%m/%d/%y")
 new_data$last_file_date <- as.Date(new_data$last_file_date, format = "%m/%d/%y")
@@ -106,11 +104,11 @@ skimr::skim(new_data)
 ```{r}
 ## ------------------------- Code for Party ---------------------##
 
-new_data <- new_data %>% 
-  mutate(party = recode(party, REP = "REP", DEM = "DEM", .default = "NONE")) %>% 
-  mutate(party = ifelse(party == "DEM" | party == "REP", party, "NONE"))
+#new_data <- new_data %>% 
+  #mutate(party = recode(party, REP = "REP", DEM = "DEM", .default = "NONE")) %>% 
+  #mutate(party = ifelse(party == "DEM" | party == "REP", party, "NONE"))
 
-skimr::skim(new_data)
+#skimr::skim(new_data)
 
 ```
 
@@ -401,54 +399,65 @@ receipt
 
 ###------------------------------------MY ORIGINAL ATTEMPT ------------------------------------- ####
 
-# Turn ORG_TP and party into factors
-train_data2$ORG_TP <- as.factor (train_data2$ORG_TP)
-train_data2$party <- as.factor (train_data2$party)
+### Turn ORG_TP and party into factors
+#train_data2$ORG_TP <- as.factor (train_data2$ORG_TP)
+#train_data2$party <- as.factor (train_data2$party)
 
-#Create recipe
+###Create recipe
 
-rcp <-
-  recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>%
-  step_dummy(all_nominal()) %>% 
-    step_range(all_numeric()) %>% 
-  prep()
+#rcp <-
+  #recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>%
+  #step_dummy(all_nominal()) %>% 
+    #step_range(all_numeric()) %>% 
+  #prep()
 
 #rm(rcp)
 
+```
+
+```{r, echo = FALSE}
 ###### ----------------------------- NATHAN'S FIX ---------------------------------######
 
-# KEEP ONLY THOSE IN RECIPES
-x <- train_data2 %>% select(SuperPAC_yes, party, first_file_date, last_file_date, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, TTL_CONTB, TTL_RECEIPTS, TTL_DISB, ORG_TP)
+# RECODE PARTY
+train_data2 <- train_data2 %>% 
+  mutate(party = ifelse(party == "DEM" | party == "REP" , party, "NONE"),
+         party = ifelse(is.na(party), "NONE", party))
 
-# Turn party NAs into an actual factor
-x <- x %>% mutate(party = ifelse(is.na(party), "NONE", party))
+# RECODE ORG_TP
+train_data2 <- train_data2 %>% 
+    mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
+         ORG_TP = ifelse(is.na(ORG_TP), "NONE", ORG_TP))
 
-# CONVERT TO FACTOR
-x <- x %>% mutate_if(is.character, as.factor)
+# CONVERT ALL CHARACTERS TO FACTOR
+train_data2 <- train_data2 %>% mutate_if(is.character, as.factor)
 
-#Create recipe
+# CONVERT RESPONSE VARIABLE TO FACTOR
+train_data2$SuperPAC_yes <- as.factor(train_data2$SuperPAC_yes)
+
+# CHECK THAT THIS ALL WORKED
+str(train_data2)
+
+# CREATE RECIPE
 rcp <-
   recipe(
-    SuperPAC_yes ~ x, party, first_file_date, last_file_date, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, TTL_CONTB, TTL_RECEIPTS, TTL_DISB, ORG_TP, x
+    SuperPAC_yes ~ party + first_file_date + last_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP,
+    train_data2
   ) %>%
-#  step_bagimpute(ORG_TP, party, options = list(nbagg = 5, keepX = FALSE)) %>%
-  step_dummy(all_nominal(), -all_outcomes()) %>%
-  step_range(all_numeric(), -first_file_date, -last_file_date) %>% 
-#  step_rollimpute(ORG_TP, party, window = 3) %>% # Normalize scale
+  step_dummy(party, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, ORG_TP, -all_outcomes()) %>%
+  step_knnimpute(TTL_CONTB, TTL_RECEIPTS, TTL_DISB, -first_file_date, -last_file_date) %>% 
   prep()
-
-#rm(rcp)
     
-
-
-# Apply the recipe to the training and test data
+# APPLY RECIPE TO BOTH TRAINING AND TEST DATASETS
 train_data_processed <- bake(rcp,train_data2)
 test_data_processed <- bake(rcp,test_data2) 
 
-#Check
-skimr::skim(train_data_processed)
+# CONVERT RESPONSE VARIABLE TO FACTOR 
+train_data_processed$SuperPAC_yes <- as.factor(train_data_processed$SuperPAC_yes)
 
-#####ORG_TP and party are missing -- both characters
+# CHECK THAT THIS ALL WORKED
+skimr::skim(train_data_processed)
+str(train_data_processed)
+
 ```
 
 ```{r}
@@ -465,10 +474,11 @@ sapply(folds,length)
 #Validation conditions
 control_conditions <- 
   trainControl(method='cv', # K-fold cross validation
-               summaryFunction = twoClassSummary, # Need this b/c it's a classification problem
-               classProbs = TRUE, # Need this b/c it's a classification problem
+               summaryFunction = twoClassSummary, # classification problem
+               classProbs = TRUE, # classification problem
                index = folds # The indices for our folds (so they are always the same)
   )
+
 
 ```
 
@@ -478,7 +488,7 @@ control_conditions <-
 
 #Logit Model
 mod_logit <-
-  train(SuperPAC_yes ~  .,train_data_processed, # Equation (outcome and everything else)
+  train(SuperPAC_yes ~ .,train_data_processed, # Equation
         data=train_data_processed, # Training data 
         method = "glm", # logit function
         metric = "ROC", # area under the curve
@@ -522,7 +532,7 @@ plot(mod_cart)
 
 mod_rf <-
   train(SuperPAC_yes ~  .,train_data_processed, # Equation (outcome and everything else)
-        data=train_data3, # Training data 
+        data=train_data_processed, # Training data 
         method = "ranger", # random forest (ranger is much faster than rf)
         metric = "ROC", # area under the curve
         trControl = control_conditions
