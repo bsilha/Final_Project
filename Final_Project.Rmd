@@ -7,7 +7,7 @@ output:
     latex_engine: xelatex
 ---
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 require(tidyverse)
 require(caret) # for machine learning
 require(recipes) # For preprocessing your data
@@ -15,11 +15,10 @@ require(rattle) # For nice tree plots
 require(lubridate) # For rounding dtaes
 
 doMC::registerDoMC()
-#tinytex::install_tinytex()
 ```
 
 
-```{r, warning=FALSE}
+```{r, include=FALSE}
 ## -------------------------------------- Reading in data --------------------------------------------##
 
 #Read CVS data in
@@ -45,7 +44,7 @@ pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
 – Include a brief summary of any related work that has tried to tackle a project similar to
 yours (i.e. a light literature review)
 
-```{r}
+```{r, include = FALSE}
 ## ----------------------------------- Cleaning data: Combining CVS and cleaning dataset ---------------------------------##
 
 #Bind 2018 committee information and financial information together
@@ -76,7 +75,7 @@ new_data %>% glimpse()
 
 ```
 
-```{r}
+```{r, include = FALSE}
 ## ----------------------------------- Cleaning data: Changing variables to Date using lubridate ---------------------------------##
 
 new_data$first_file_date <- as.Date(new_data$first_file_date, format = "%m/%d/%y")
@@ -87,7 +86,7 @@ str(new_data)
 ```
 
 
-```{r}
+```{r, include = FALSE}
 ## ----------------------------------- Cleaning data: Adding new SuperPAC_yes response variable ---------------------------------##
 
 
@@ -101,17 +100,6 @@ skimr::skim(new_data)
 
 ```
 
-```{r}
-## ------------------------- Code for Party ---------------------##
-
-#new_data <- new_data %>% 
-  #mutate(party = recode(party, REP = "REP", DEM = "DEM", .default = "NONE")) %>% 
-  #mutate(party = ifelse(party == "DEM" | party == "REP", party, "NONE"))
-
-#skimr::skim(new_data)
-
-```
-
 # Data
 
 – Where does the data come from?
@@ -119,7 +107,7 @@ skimr::skim(new_data)
 – What are the variables of interest?
 – What steps did you take to wrangle the data?
 
-```{r}
+```{r, include = FALSE}
 ## --------------------- Splitting data into training and test datasets -------------------##
 
 range(new_data$first_file_date)
@@ -143,7 +131,7 @@ dim(test_data)
 ```
 
 
-```{r}
+```{r, echo = FALSE}
 ## --------------------- Data Visualization: categorical variables -------------------##
 
 skimr::skim(train_data)
@@ -156,15 +144,6 @@ train_data %>%
   geom_bar() +
   scale_y_log10() +
   facet_wrap(~var,scales="free",ncol=3)
-
-train_data %>% 
-  select(committee_type_full,) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  geom_bar() +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
 # Analysis 
@@ -186,33 +165,29 @@ crystal clear about what you’re doing and why.
 ## ------------------------- Data Visualization: date variables ---------------------##
 
 #Visualize distribution of date variables
-train_data %>% 
-  select(first_file_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  stat_count(width = 1) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
-
-#peak around late 2019
-train_data %>% 
-  select(last_f1_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  stat_count(width = 1) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
 
 train_data %>% 
-  select(last_file_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  stat_count(width = 1) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
+ggplot(aes(x=last_file_date)) + 
+  geom_histogram(binwidth=5, colour="white") +
+       ylab("Frequency") + 
+  xlab("Year and Month") +
+       theme_bw()
+
+train_data %>% 
+ggplot(aes(x=first_file_date)) + 
+  geom_histogram(binwidth=100, colour="white") +
+       ylab("Frequency") + 
+  xlab("Year") +
+       theme_bw()
+
+train_data %>% 
+ggplot(aes(x=last_f1_date)) + 
+  geom_histogram(binwidth=50, colour="white") +
+       ylab("Frequency") + 
+  xlab("Year") +
+       theme_bw()
+
+
 ```
 
 ## Conclusions:
@@ -222,7 +197,7 @@ train_data %>%
 
 
 
-```{r}
+```{r, echo = FALSE}
 ## ------------------------- Data Visualization: More in-depth ---------------------##
 
 # Load
@@ -249,7 +224,7 @@ new_data %>%
 
 
 
-```{r}
+```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Round Dates ----------------------------##
 
 #Round date variables to nearest month/year
@@ -262,6 +237,10 @@ test_data1 <- test_data %>%
   mutate (first_file_date = round_date(first_file_date, unit = "month")) %>% 
   mutate (last_f1_date = round_date(last_f1_date, unit = "month")) %>% 
   mutate (last_file_date = round_date(last_file_date, unit = "month"))
+```
+
+```{r, echo = FALSE}
+## -------------------------------- Data Visualization: Round Dates ----------------------------##
 
 #Visualize 
 train_data1 %>% 
@@ -303,7 +282,7 @@ train_data1 %>%
 - Since Citizens United case, the "first filing date" of SuperPACs and PAC - Nonqualified committees have increased exponentially
 - The Citizens United case seems to indicate the start of the majority of "first filing" dates for SuperPACs
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Log money variables ----------------------------##
 #Convert TTL_CONTB, TTL_RECEIPTS, TTL_DISB to log
 
@@ -393,109 +372,49 @@ receipt
 ## Conclusions:
 - 
 
-```{r, echo = FALSE}
-## -------------------------------- Pre-Process the Data: Create recipe and apply to test and training data ----------------------------##
+```{r, include = FALSE}
+###### ----------------------------- Recoding and recipe ---------------------------------######
 
-
-###------------------------------------MY ORIGINAL ATTEMPT ------------------------------------- ####
-
-### Turn ORG_TP and party into factors
-#train_data2$ORG_TP <- as.factor (train_data2$ORG_TP)
-#train_data2$party <- as.factor (train_data2$party)
-
-###Create recipe
-
-#rcp <-
-  #recipe(SuperPAC_yes ~ party + first_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP, train_data2) %>%
-  #step_dummy(all_nominal()) %>% 
-    #step_range(all_numeric()) %>% 
-  #prep()
-
-#rm(rcp)
-
-```
-
-```{r}
-###### ----------------------------- NATHAN'S FIX ---------------------------------######
-
-# Turn party NAs into an actual factor
+#Turn party into an actual factor
 train_data2 <- train_data2 %>% 
   mutate(party = ifelse(party == "DEM" | party == "REP" , party, "NONE"),
          party = ifelse(is.na(party), "NONE", party))
 
 #Turn ORG_TP into an actual factor
 train_data2 <- train_data2 %>% 
-  mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
+    mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
          ORG_TP = ifelse(is.na(ORG_TP), "NONE", ORG_TP))
 
 # CONVERT ALL CHARACTERS TO FACTOR
 train_data2 <- train_data2 %>% mutate_if(is.character, as.factor)
 
+# CHECK
+str(train_data2)
+
+# CONVERT RESPONSE VARIABLE TO FACTOR AND LABEL
 x <- train_data2 %>% 
   select(SuperPAC_yes, party, first_file_date, last_file_date, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, TTL_CONTB, TTL_RECEIPTS, TTL_DISB, ORG_TP) %>% 
   mutate(SuperPAC_yes = as.factor(SuperPAC_yes),
          SuperPAC_yes = recode(SuperPAC_yes, `0` = "no", `1` = "yes"))
-  
 
+# CREATE RECIPE
 rcp <- 
   recipe(SuperPAC_yes ~  .,x) %>% 
-  step_knnimpute(TTL_CONTB, TTL_RECEIPTS, neighbors = 5) %>% 
+  step_knnimpute(TTL_CONTB, TTL_RECEIPTS, TTL_DISB, neighbors = 5) %>% 
   step_dummy(all_nominal(),-all_outcomes()) %>% # Why exclude outcomes?
   step_range(all_numeric()) %>%  # Normalize scale
   prep()
 
 train_data_processed <- bake(rcp,x)
+test_data_processed <- bake(rcp,x)
 
-train_data_processed <- train_data_processed %>% 
-  janitor::clean_names()
-```
-
-
-```{r, echo = FALSE}
-###### ----------------------------- NATHAN'S FIX ---------------------------------######
-
-# RECODE PARTY
-train_data2 <- train_data2 %>% 
-  mutate(party = ifelse(party == "DEM" | party == "REP" , party, "NONE"),
-         party = ifelse(is.na(party), "NONE", party))
-
-# RECODE ORG_TP
-train_data2 <- train_data2 %>% 
-    mutate(ORG_TP = ifelse(ORG_TP == "C" | ORG_TP == "T" | ORG_TP == "M", ORG_TP, "NONE"),
-         ORG_TP = ifelse(is.na(ORG_TP), "NONE", ORG_TP))
-
-# CONVERT RESPONSE VARIABLE TO FACTOR
-train_data2$SuperPAC_yes <- as.factor(train_data2$SuperPAC_yes)
-
-# CHECK THAT THIS ALL WORKED
-str(train_data2)
-
-# CREATE RECIPE
-rcp <-
-  recipe(
-    SuperPAC_yes ~ party + first_file_date + last_file_date + CMTE_DSGN + CMTE_FILING_FREQ + CMTE_ST + TTL_CONTB + TTL_RECEIPTS + TTL_DISB + ORG_TP,
-    train_data2
-  ) %>%
-  step_dummy(party, CMTE_DSGN, CMTE_FILING_FREQ, CMTE_ST, ORG_TP, -all_outcomes()) %>%
-  step_knnimpute(TTL_CONTB, TTL_RECEIPTS, TTL_DISB, -first_file_date, -last_file_date) %>% 
-  prep()
-    
-# APPLY RECIPE TO BOTH TRAINING AND TEST DATASETS
-train_data_processed <- bake(rcp,train_data2)
-test_data_processed <- bake(rcp,test_data2) 
-
-# RENAME LEVELS OF SUPERPAC_YES
-train_data_processed <- train_data_processed %>%
-  mutate(SuperPAC_yes = as.factor(SuperPAC_yes),
-         SuperPAC_yes = recode(SuperPAC_yes, `0` = "no", `1` = "yes"))
-
-# CHECK THAT THIS ALL WORKED
 skimr::skim(train_data_processed)
-str(train_data_processed)
+skimr::skim(train_data_processed)
 
 ```
 
-```{r}
+
+```{r, include = FALSE}
 ## -------------------------------- Cross-Validation --------------------------------##
 
 # set a seed for replication purposes 
@@ -514,16 +433,18 @@ control_conditions <-
                index = folds # The indices for our folds (so they are always the same)
   )
 
+skimr::skim(train_data_processed)
+
 
 ```
 
-```{r}
+```{r, echo = FALSE}
 ## ------------------------------------- Models -------------------------------------##
 
 
 #Logit Model
 mod_logit <-
-  train(SuperPAC_yes ~ .,train_data_processed, # Equation
+  train(SuperPAC_yes ~ ., # Equation
         data=train_data_processed, # Training data 
         method = "glm", # logit function
         metric = "ROC", # area under the curve
@@ -537,7 +458,7 @@ mod_logit
 #K-Nearest Neighbors Model
 
 mod_knn <-
-  train(SuperPAC_yes ~  .,train_data_processed, # Equation (outcome and everything else)
+  train(SuperPAC_yes ~  ., # Equation (outcome and everything else)
         data=train_data_processed, # Training data 
         method = "knn", # K-Nearest Neighbors Algorithm
         metric = "ROC", # area under the curve
@@ -546,12 +467,27 @@ mod_knn <-
 
 plot(mod_knn)
 
+#K-Nearest Neighbors Model 2
+
+knn_tune = expand.grid(k = c(1,3,10,50,60,70,80,100))
+knn_tune
+
+mod_knn2 <-
+  train(SuperPAC_yes ~  ., # Equation (outcome and everything else)
+        data=train_data_processed, # Training data 
+        method = "knn", # K-Nearest Neighbors Algorithm
+        metric = "ROC", # area under the curve
+        tuneGrid = knn_tune,
+        trControl = control_conditions
+  )
+
+plot(mod_knn2)
 
 
 #CART
 
 mod_cart <-
-  train(SuperPAC_yes ~  .,train_data_processed, # Equation (outcome and everything else)
+  train(SuperPAC_yes ~  ., # Equation (outcome and everything else)
         data=train_data_processed, # Training data 
         method = "rpart", # Classification Tree
         metric = "ROC", # area under the curve
@@ -560,13 +496,24 @@ mod_cart <-
 
 plot(mod_cart)
 
+#CART2
 
+tune_cart2 <- expand.grid(cp = c(0.0001)) # Complexity Parameter (how "deep" our trees should grow)
+
+mod_cart2 <-
+  train(SuperPAC_yes ~ ., # Equation (outcome and everything else)
+        data=train_data_processed, # Training data 
+        method = "rpart", # Classification Tree
+        metric = "ROC", # area under the curve
+        tuneGrid = tune_cart2, # Tuning parameters
+        trControl = control_conditions
+  )
 
 
 #Random Forest
 
 mod_rf <-
-  train(SuperPAC_yes ~  .,train_data_processed, # Equation (outcome and everything else)
+  train(SuperPAC_yes ~ ., # Equation (outcome and everything else)
         data=train_data_processed, # Training data 
         method = "ranger", # random forest (ranger is much faster than rf)
         metric = "ROC", # area under the curve
@@ -575,18 +522,21 @@ mod_rf <-
 
 plot(mod_rf)
 
+fancyRpartPlot(mod_cart$finalModel)
+
 ```
 
-```{r}
+```{r, echo = FALSE}
 ## ------------------------------------- Model Comparison  -------------------------------------##
 
 mod_list <-
   list(
     knn1 = mod_knn,
-    #knn2 = mod_knn2,
+    knn2 = mod_knn2,
     cart1 = mod_cart,
-    #cart2 = mod_cart2,
+    cart2 = mod_cart2,
     rf = mod_rf,
+    logit = mod_logit
   )
 
 # Generate Plot to compare output. 
@@ -594,10 +544,10 @@ dotplot(resamples(mod_list))
 
 ```
 
-```{r}
+```{r, include = FALSE}
 ## ------------------------------------- Predictive Performance -------------------------------------##
 
-pred <- predict(xxxxx,newdata = test_data_processed)
+pred <- predict(mod_rf,newdata = test_data_processed)
 confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 ```
 
