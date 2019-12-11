@@ -35,21 +35,27 @@ pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
 
 # Introduction
 
-- What is the aim of this project? 
-  - Summarize the problem
-  - State your goals
-– What do you do in this report?
-  - offer a roadmap of the project
+The aim of this project is to analyze and predict the factors necessary for producing an Independent Expenditure-Only Committee (Super PAC). There are several goals of this project including:
 
-The aim of this project is to analyze and predict the factors necessary for producing a SuperPAC. 
+- Analyze which states are more likely to register Super PACs
+- Assess the scale and magnitude of the effect that Citizens United v. FEC had on FEC filings and registration
+- Discuss the financial statements of Super PACs compared to other political committees during the 2018 Election Cycle
+- Using supervised learning, judge whether or not classification algorithms can be respectfully used in order to predict whether a political committee is a Super PAC or not
 
-
+For this project, I will be using data from the Federal Election Commission (FEC) website from the 2018 Election Cycle. First, I will join together political action committee (PAC) information with their financial statements from that election cycle. After cleaning that dataset, I will then analyze several variables in-depth (including registered state, disbursments, contributions, receipts, and filing time). Finally, I will create several models that attempt to predict with respectable accuracy if a political committee is a Super PAC or not. 
 
 # Problem Statement and Background
 
 – Give a clear and complete statement of the problem and/or aim of your analysis.
 – Include a brief summary of any related work that has tried to tackle a project similar to
 yours (i.e. a light literature review)
+
+The Federal Election Commisssion (FEC) is an independent, governmental agency that is responsible for "administering and enforcing campaign finance law".[^1] They are also responsible for financial disclosure statements to/from candidates and committees that influence public office. These records are public information. Many committees, such as PACs and individuals, are subject to contribution limits. However, Independent Expenditure-Only Committees (Super PACs) are not. 
+
+Super PACs were initiated in January 2010 after *Citizens United v. FEC* was decided. The Supreme Court in this case maintained that freedom of speech was essential to democracy and that speech from a corporation was no exception. This new kind of committee would be able to bypass fundraising and expenditure limitations set on other political committees. The only limitation Super PACs have is that they may not coordinate with candidates in their express advocacy for/against them. Since their birth early this decade, Super PACs have collectively spent over $2 billion.[^2] 
+
+[^1]: https://www.fec.gov/about/mission-and-history/
+[^2]: https://fas.org/sgp/crs/misc/R42042.pdf 
 
 ```{r, include = FALSE}
 ## ----------------------------------- Cleaning data: Combining CVS and cleaning dataset ---------------------------------##
@@ -94,11 +100,11 @@ str(new_data)
 
 
 ```{r, include = FALSE}
-## ----------------------------------- Cleaning data: Adding new SuperPAC_yes response variable ---------------------------------##
+## ----------------------------------- Cleaning data: Adding new Super PAC_yes response variable ---------------------------------##
 
 
 # Add new variable to dataset
-# if Superpac, Then SuperPAC_yes = 1
+# if , Then _yes = 1
 
 new_data <- new_data %>% 
   mutate(SuperPAC_yes = recode(committee_type, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0, .default = 0))
@@ -215,11 +221,11 @@ new_data %>%
   #Line to show when Citizens United became official
   scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                         labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   scale_colour_manual(name="PAC Type",
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                      labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   ggtitle("PAC Filing Over Time by State and PAC Type") +
   xlab ("First File Date") +
   ylab ("State of Registration")
@@ -280,11 +286,11 @@ train_data1 %>%
 
 
 ## Conclusions:
-- Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not SuperPACs
+- Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not Super PACs
 - States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
 - It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
-- Since Citizens United case, the "first filing date" of SuperPACs and PAC - Nonqualified committees have increased exponentially
-- The Citizens United case seems to indicate the start of the majority of "first filing" dates for SuperPACs
+- Since Citizens United case, the "first filing date" of Super PACs and PAC - Nonqualified committees have increased exponentially
+- The Citizens United case seems to indicate the start of the majority of "first filing" dates for Super PACs
 
 ```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Log money variables ----------------------------##
