@@ -2,9 +2,13 @@
 title: "Final Project"
 author: "Bridget Silha"
 date: "12/14/2019"
+header-includes:
+   - \usepackage{setspace}
+   - \doublespacing
 output:
   pdf_document:
     latex_engine: xelatex
+fontsize: 12pt
 ---
 
 ```{r, include = FALSE}
@@ -36,7 +40,10 @@ pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
   - State your goals
 – What do you do in this report?
   - offer a roadmap of the project
-  
+
+The aim of this project is to analyze and predict the factors necessary for producing a SuperPAC. 
+
+
 
 # Problem Statement and Background
 
@@ -109,9 +116,6 @@ skimr::skim(new_data)
 
 ```{r, include = FALSE}
 ## --------------------- Splitting data into training and test datasets -------------------##
-
-range(new_data$first_file_date)
-range(new_data$last_file_date)
 
 #split into training and test data
 index = createDataPartition(new_data$SuperPAC_yes,p=.8,list=F) 
@@ -401,7 +405,7 @@ x <- train_data2 %>%
 rcp <- 
   recipe(SuperPAC_yes ~  .,x) %>% 
   step_knnimpute(TTL_CONTB, TTL_RECEIPTS, TTL_DISB, neighbors = 5) %>% 
-  step_dummy(all_nominal(),-all_outcomes()) %>% # Why exclude outcomes?
+  step_dummy(all_nominal(),-all_outcomes()) %>% 
   step_range(all_numeric()) %>%  # Normalize scale
   prep()
 
@@ -548,6 +552,7 @@ dotplot(resamples(mod_list))
 ## ------------------------------------- Predictive Performance -------------------------------------##
 
 pred <- predict(mod_rf,newdata = test_data_processed)
+
 confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 ```
 
