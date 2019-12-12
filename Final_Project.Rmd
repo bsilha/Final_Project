@@ -46,8 +46,8 @@ For this project, I will be using data from the Federal Election Commission (FEC
 
 # Problem Statement and Background
 
-– Give a clear and complete statement of the problem and/or aim of your analysis.
-– Include a brief summary of any related work that has tried to tackle a project similar to
+- Give a clear and complete statement of the problem and/or aim of your analysis.
+- Include a brief summary of any related work that has tried to tackle a project similar to
 yours (i.e. a light literature review)
 
 The Federal Election Commisssion (FEC) is an independent, governmental agency that is responsible for "administering and enforcing campaign finance law".[^1] They are also responsible for financial disclosure statements to/from candidates and committees that influence public office. These records are public information. Many committees, such as PACs and individuals, are subject to contribution limits. However, Independent Expenditure-Only Committees (Super PACs) are not. 
@@ -115,10 +115,21 @@ skimr::skim(new_data)
 
 # Data
 
-– Where does the data come from?
-– What is the unit of observation?
-– What are the variables of interest?
-– What steps did you take to wrangle the data?
+- Where does the data come from?
+- What is the unit of observation?
+- What are the variables of interest?
+- What steps did you take to wrangle the data?
+
+The two datasets that I patched together were taken from the FEC's regularly maintained website. The unit of observation is *committee id*. Below you can see the variables of interest:
+```{r}
+head(new_data)
+```
+
+Below are the steps that I did in order to wrangle the data: 
+
+1. 
+2. 
+3. 
 
 ```{r, include = FALSE}
 ## --------------------- Splitting data into training and test datasets -------------------##
@@ -560,6 +571,8 @@ dotplot(resamples(mod_list))
 pred <- predict(mod_rf,newdata = test_data_processed)
 
 confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
+
+confusionMatrix(pred,test_data_processed$SuperPAC_yes,positive='yes')
 ```
 
 # Results
