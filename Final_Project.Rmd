@@ -164,9 +164,20 @@ skimr::skim(new_data)
 
 Below you can see the variables of interest:
 ```{r}
-head(new_data)
+new_data %>% glimpse()
 ```
 
+# Analysis 
+
+– Describe the methods/tools you explored in your project.
+– Outline in detail your entire analysis.
+  - Justify the tools/methods that you used.
+  - Assume the reader is smart but doesn’t know R/Machine Learning well. That is, be
+crystal clear about what you’re doing and why.
+
+## Split the Data
+
+First, I split the *new_data* dataset into two further datasets based on our response variables, *SuperPAC_yes*. These datasets, the training and test dataset, are essential to verify that any model or predictions that are made can be applied to "unseen" data. By doing this, we can also reduce the error for "overfitting" the model to our training data. For this analysis, the training and test data will share an 80-20 split of the response variable values. 
 
 ```{r, include = FALSE}
 ## --------------------- Splitting data into training and test datasets -------------------##
@@ -186,12 +197,37 @@ round(nrow(test_data)/nrow(new_data),3)
 dim(train_data)
 dim(test_data)
 
+
+
 ```
 
+## Understanding the Outcome
+
+Our response variable, *SuperPAC_yes*, has been manually created based off of another variables, *committee_type*. It takes on the value of "1" if the committee is a Super PAC and "0" if it is any other type of PAC. In the training dataset, there seems to be roughly a 1:4 ratio between Super PAC and other PAC types. There are 4,967 observations in the training dataset. 
+
+```{r}
+
+train_data %>% 
+  ggplot(aes(SuperPAC_yes)) +
+  geom_bar()
+
+train_data %>% nrow()
+
+```
+
+## Understanding the Features
+
+### Conlusions
+
+Looking at the categorical variables in the dataset, there seems to be good variation in 
+
+- There's good, random distribution of some variables such as ORG_TP and CMTE_FILING_FREQ
+- There are many multiple errors in the party_full variable where human error might have contributed to similar entries (e.g. "None", "Unknown", "NA")
 
 ```{r, echo = FALSE}
 ## --------------------- Data Visualization: categorical variables -------------------##
 
+#Summary
 skimr::skim(train_data)
 
 #Visualize distribution of categorical variables
@@ -204,19 +240,10 @@ train_data %>%
   facet_wrap(~var,scales="free",ncol=3)
 ```
 
-# Analysis 
-
-– Describe the methods/tools you explored in your project.
-– Outline in detail your entire analysis.
-  - Justify the tools/methods that you used.
-  - Assume the reader is smart but doesn’t know R/Machine Learning well. That is, be
-crystal clear about what you’re doing and why.
-
-## Conlusions:
-- There's good, random distribution of some variables such as ORG_TP and CMTE_FILING_FREQ
-- There are many multiple errors in the party_full variable where human error might have contributed to similar entries (e.g. "None", "Unknown", "NA")
-
-
+### Conclusions:
+- There's a peak around late 2019 for last_f1_date
+- last_file_date is consistant with committee filing frequency
+- There's a peak around 2008 for times when committees first filed with the FEC
 
 
 ```{r, echo = FALSE}
@@ -248,12 +275,8 @@ ggplot(aes(x=last_f1_date)) +
 
 ```
 
-## Conclusions:
-- There's a peak around late 2019 for last_f1_date
-- last_file_date is consistant with committee filing frequency
-- There's a peak around 2008 for times when committees first filed with the FEC
 
-
+## Understanding the Relationship Between Features
 
 ```{r, echo = FALSE}
 ## ------------------------- Data Visualization: More in-depth ---------------------##
@@ -281,21 +304,6 @@ new_data %>%
 ```
 
 
-
-```{r, include = FALSE}
-## -------------------------------- Pre-Process the Data: Round Dates ----------------------------##
-
-#Round date variables to nearest month/year
-train_data1 <- train_data %>% 
-  mutate (first_file_date = round_date(first_file_date, unit = "month")) %>% 
-  mutate (last_f1_date = round_date(last_f1_date, unit = "month")) %>% 
-  mutate (last_file_date = round_date(last_file_date, unit = "month"))
-
-test_data1 <- test_data %>% 
-  mutate (first_file_date = round_date(first_file_date, unit = "month")) %>% 
-  mutate (last_f1_date = round_date(last_f1_date, unit = "month")) %>% 
-  mutate (last_file_date = round_date(last_file_date, unit = "month"))
-```
 
 ```{r, echo = FALSE}
 ## -------------------------------- Data Visualization: Round Dates ----------------------------##
@@ -333,12 +341,14 @@ train_data1 %>%
 ```
 
 
-## Conclusions:
+### Conclusions:
 - Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not Super PACs
 - States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
 - It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
 - Since Citizens United case, the "first filing date" of Super PACs and PAC - Nonqualified committees have increased exponentially
 - The Citizens United case seems to indicate the start of the majority of "first filing" dates for Super PACs
+
+## Unpacking the Outcome
 
 ```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Log money variables ----------------------------##
