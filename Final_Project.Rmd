@@ -16,21 +16,9 @@ require(tidyverse)
 require(caret) # for machine learning
 require(recipes) # For preprocessing your data
 require(rattle) # For nice tree plots
-require(lubridate) # For rounding dtaes
+require(lubridate) # For rounding dates
 
 doMC::registerDoMC()
-```
-
-
-```{r, include=FALSE}
-## -------------------------------------- Reading in data --------------------------------------------##
-
-#Read CVS data in
-total_fec_committee_party_and_pac <- read_csv("committees.csv")
-##DATA DESCRIPTION FOR COMMITTEE TYPE: https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
-
-pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
-##DATA DESCRIPTION: https://www.fec.gov/campaign-finance-data/committee-summary-file-description/ 
 ```
 
 # Introduction
@@ -57,11 +45,38 @@ Super PACs were initiated in January 2010 after *Citizens United v. FEC* was dec
 [^1]: https://www.fec.gov/about/mission-and-history/
 [^2]: https://fas.org/sgp/crs/misc/R42042.pdf 
 
+# Data
+
+The two datasets that I patched together were taken from the FEC's regularly maintained website. The unit of observation is *committee id*. 
+Below are the steps that I did in order to wrangle the data: 
+
+1. Read in CSVs from FEC website
+
+```{r, include=FALSE}
+## -------------------------------------- Data: Reading in Data --------------------------------------------##
+
+#Read CVS data in
+total_fec_committee_party_and_pac <- read_csv("committees.csv")
+##DATA DESCRIPTION FOR COMMITTEE TYPE: https://www.fec.gov/campaign-finance-data/committee-type-code-descriptions/ 
+
+pac_financial_info_2018 <- read_csv("committee_summary_2018.csv")
+##DATA DESCRIPTION: https://www.fec.gov/campaign-finance-data/committee-summary-file-description/ 
+```
+
+2. Joined the two CSVs based on *committee id*
+
 ```{r, include = FALSE}
-## ----------------------------------- Cleaning data: Combining CVS and cleaning dataset ---------------------------------##
+## ----------------------------------- Data: Combining CVS ---------------------------------##
 
 #Bind 2018 committee information and financial information together
 new_data <- right_join(total_fec_committee_party_and_pac, pac_financial_info_2018, by=c("committee_id" = "CMTE_ID"), c("name" = "CMTE_NM"))
+
+```
+
+3. Cut down unnecessary variables in the dataset (such as committee treasurer name and committee zipcode)
+
+```{r}
+## ----------------------------------- Data: Cut Down Unnecesary Variables ---------------------------------##
 
 #Cut down variables
 new_data <- new_data %>% 
@@ -70,33 +85,67 @@ new_data <- new_data %>%
 #Committee name and commmitte id as first variables
 new_data <- new_data %>% 
   select (CMTE_NM, committee_id, everything())
+```
 
-skimr::skim(new_data)
+4. Filtered out results to only accept PAC committees based on the variable *committee_type*
+
+```{r}
+## ------------- Data: Filter for PACs ------------------------------##
 
 #Filter for committee type -- only PACs
 new_data <- new_data %>% 
-  filter(committee_type == "N" | committee_type == "O" | committee_type == "Q" | committee_type == "V" | committee_type == "W")
+  filter(committee_type == "N" | committee_type == "O" | committee_type == 
+           "Q" | committee_type == "V" | committee_type == "W")
+```
+
+5. Filtered out committees that had been terminated in the past based on the variable *CMTE_FILING_FREQ*
+
+```{r}
+## --------------- Data: Filter for Active Committees ----------------##
 
 #Filter out terminated committees
 new_data <- new_data %>% 
   filter(CMTE_FILING_FREQ == "M" | CMTE_FILING_FREQ == "Q")
-
-#check to see that committee_ids are unique for all observations
-skimr::skim(new_data)
-
-new_data %>% glimpse()
-
 ```
 
-```{r, include = FALSE}
-## ----------------------------------- Cleaning data: Changing variables to Date using lubridate ---------------------------------##
 
+6. Made *first_filing_date*, *last_f1_date*, and *last_file_date* variables into a "Date" class
+
+
+```{r, include = FALSE}
+## ----------------------------------- Data: Changing variables to Date using lubridate ---------------------------------##
+
+# Formatting original columns as MM-DD-YY format
 new_data$first_file_date <- as.Date(new_data$first_file_date, format = "%m/%d/%y")
 new_data$last_f1_date <- as.Date(new_data$last_f1_date, format = "%m/%d/%y")
 new_data$last_file_date <- as.Date(new_data$last_file_date, format = "%m/%d/%y")
 
+# Round to nearest month
+new_data$first_file_month <- round_date(new_data$first_file_date, unit = "month"); new_data$first_file_month
+new_data$last_f1_date_month <- round_date(new_data$last_f1_date, "month")
+new_data$last_file_date_month <- round_date(new_data$last_file_date, "month")
+
+# Name the variables the month name
+new_data$first_file_month <- as.Date(new_data$first_file_month, format = "%B"); new_data$first_file_month
+new_data$last_f1_date_month <- as.Date(new_data$last_f1_date_month, format = "%B")
+new_data$last_file_date_month <- as.Date(new_data$last_file_date_month, format = "%B")
+
+# Round to nearest year
+new_data$first_file_year <- round_date(new_data$first_file_date, unit = "year")
+new_data$last_f1_date_year <- round_date(new_data$last_f1_date, "year")
+new_data$last_file_date_year <- round_date(new_data$last_file_date, "year")
+
+# Name the variables the year name
+new_data$first_file_year <- as.Date(new_data$first_file_year, format = "%Y")
+new_data$last_f1_date_year <- as.Date(new_data$last_f1_date_year, format = "%Y")
+new_data$last_file_date_year <- as.Date(new_data$last_file_date_year, format = "%Y")
+
+
 str(new_data)
 ```
+
+
+7. Created a new variable for the dataset, *SuperPAC_yes*, which identifies whether or not the specific observation is a SuperPAC based on *committee_type*
 
 
 ```{r, include = FALSE}
@@ -113,23 +162,11 @@ skimr::skim(new_data)
 
 ```
 
-# Data
-
-- Where does the data come from?
-- What is the unit of observation?
-- What are the variables of interest?
-- What steps did you take to wrangle the data?
-
-The two datasets that I patched together were taken from the FEC's regularly maintained website. The unit of observation is *committee id*. Below you can see the variables of interest:
+Below you can see the variables of interest:
 ```{r}
 head(new_data)
 ```
 
-Below are the steps that I did in order to wrangle the data: 
-
-1. 
-2. 
-3. 
 
 ```{r, include = FALSE}
 ## --------------------- Splitting data into training and test datasets -------------------##
@@ -170,7 +207,7 @@ train_data %>%
 # Analysis 
 
 – Describe the methods/tools you explored in your project.
-– Outline in detail our entire analysis.
+– Outline in detail your entire analysis.
   - Justify the tools/methods that you used.
   - Assume the reader is smart but doesn’t know R/Machine Learning well. That is, be
 crystal clear about what you’re doing and why.
@@ -574,6 +611,46 @@ confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 
 confusionMatrix(pred,test_data_processed$SuperPAC_yes,positive='yes')
 ```
+
+```{r}
+## ------------------------------------- Unpacking the Outcome: Variable Importance -------------------------------------##
+
+# install.packages("vip") # Install the package
+#pred_wrapper <- function(object, new_data) {
+  # wrapper function so vip knows how to calculate a prediction
+  #predict(object, data=new_data,type="response")$predictions[,"yes"]
+#}
+
+# Generate a variable importance plot
+#permute_imp_plot <- 
+ # vip::vip(mod_rf$finalModel,
+          # data = train_data_processed,
+          # target=train_data_processed$SuperPAC_yes,
+          # train = train_data_processed %>% select(-SuperPAC_yes),
+          # reference_class = "yes",
+          # method="permute",
+          # pred_wrapper = pred_wrapper)
+```
+
+```{r}
+## ------------------------------------- Unpacking the Outcome: Partial Dependency -------------------------------------##
+
+# install.packages('pdp') Download the partial dependency plot
+pdp_dat = pdp::partial(mod_rf, 
+                        pred.var = c("first_file_date"), 
+                        ice = F, 
+                        center = F, 
+                        prob = T,
+                        type= "classification",
+                        train = train_data_processed) 
+pdp_dat
+
+pdp_dat %>% 
+  ggplot(aes(first_file_date,yhat)) + geom_line() +
+  labs(y="Pr(SuperPAC_yes == 1)")
+```
+
+
 
 # Results
 
