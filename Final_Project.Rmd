@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "Super PACs in the 2018 Election Year"
 author: "Bridget Silha"
 date: "12/14/2019"
 header-includes:
@@ -25,7 +25,6 @@ doMC::registerDoMC()
 
 The aim of this project is to analyze and predict the factors necessary for producing an Independent Expenditure-Only Committee (Super PAC). There are several goals of this project including:
 
-- Analyze which states are more likely to register Super PACs
 - Assess the scale and magnitude of the effect that Citizens United v. FEC had on FEC filings and registration
 - Discuss the financial statements of Super PACs compared to other political committees during the 2018 Election Cycle
 - Using supervised learning, judge whether or not classification algorithms can be respectfully used in order to predict whether a political committee is a Super PAC or not
@@ -33,10 +32,6 @@ The aim of this project is to analyze and predict the factors necessary for prod
 For this project, I will be using data from the Federal Election Commission (FEC) website from the 2018 Election Cycle. First, I will join together political action committee (PAC) information with their financial statements from that election cycle. After cleaning that dataset, I will then analyze several variables in-depth (including registered state, disbursments, contributions, receipts, and filing time). Finally, I will create several models that attempt to predict with respectable accuracy if a political committee is a Super PAC or not. 
 
 # Problem Statement and Background
-
-- Give a clear and complete statement of the problem and/or aim of your analysis.
-- Include a brief summary of any related work that has tried to tackle a project similar to
-yours (i.e. a light literature review)
 
 The Federal Election Commisssion (FEC) is an independent, governmental agency that is responsible for "administering and enforcing campaign finance law".[^1] They are also responsible for financial disclosure statements to/from candidates and committees that influence public office. These records are public information. Many committees, such as PACs and individuals, are subject to contribution limits. However, Independent Expenditure-Only Committees (Super PACs) are not. 
 
@@ -75,7 +70,7 @@ new_data <- right_join(total_fec_committee_party_and_pac, pac_financial_info_201
 
 3. Cut down unnecessary variables in the dataset (such as committee treasurer name and committee zipcode)
 
-```{r}
+```{r, include = FALSE}
 ## ----------------------------------- Data: Cut Down Unnecesary Variables ---------------------------------##
 
 #Cut down variables
@@ -89,7 +84,7 @@ new_data <- new_data %>%
 
 4. Filtered out results to only accept PAC committees based on the variable *committee_type*
 
-```{r}
+```{r, include = FALSE}
 ## ------------- Data: Filter for PACs ------------------------------##
 
 #Filter for committee type -- only PACs
@@ -100,7 +95,7 @@ new_data <- new_data %>%
 
 5. Filtered out committees that had been terminated in the past based on the variable *CMTE_FILING_FREQ*
 
-```{r}
+```{r, include = FALSE}
 ## --------------- Data: Filter for Active Committees ----------------##
 
 #Filter out terminated committees
@@ -151,29 +146,20 @@ str(new_data)
 ```{r, include = FALSE}
 ## ----------------------------------- Cleaning data: Adding new Super PAC_yes response variable ---------------------------------##
 
-
 # Add new variable to dataset
 # if , Then _yes = 1
 
 new_data <- new_data %>% 
   mutate(SuperPAC_yes = recode(committee_type, "O" = 1, "N" = 0, "V" = 0, "W" = 0, "Q" = 0, .default = 0))
 
-skimr::skim(new_data)
-
 ```
 
 Below you can see the variables of interest:
 ```{r}
-new_data %>% glimpse()
+new_data %>% colnames()
 ```
 
 # Analysis 
-
-– Describe the methods/tools you explored in your project.
-– Outline in detail your entire analysis.
-  - Justify the tools/methods that you used.
-  - Assume the reader is smart but doesn’t know R/Machine Learning well. That is, be
-crystal clear about what you’re doing and why.
 
 ## Split the Data
 
@@ -197,22 +183,20 @@ round(nrow(test_data)/nrow(new_data),3)
 dim(train_data)
 dim(test_data)
 
-
-
 ```
 
 ## Understanding the Outcome
 
 Our response variable, *SuperPAC_yes*, has been manually created based off of another variables, *committee_type*. It takes on the value of "1" if the committee is a Super PAC and "0" if it is any other type of PAC. In the training dataset, there seems to be roughly a 1:4 ratio between Super PAC and other PAC types. There are 4,967 observations in the training dataset. 
 
-```{r}
+
+```{r, fig.width=3, fig.height=3, echo = FALSE}
 
 train_data %>% 
   ggplot(aes(SuperPAC_yes)) +
   geom_bar()
 
 train_data %>% nrow()
-
 ```
 
 ## Understanding the Features
@@ -221,11 +205,9 @@ train_data %>% nrow()
 
 Looking at the categorical variables in the dataset, there seems to be good variation in variables such as *ORG_TP* and *CMTE_FILING_FREQ*. In the variable *committee_type*, there seems to be over-represetnation from PAC types like "PAC - Qualified" and "PAC - Nonqualified" (shown as "Q" and "N" below) compared to PAC with Non-contribution Account - Nonqualified" and "PAC with Non-contribution Account - Nonqualified" (shown as "W" and "V" below). 
 
-```{r, echo = FALSE}
-## --------------------- Data Visualization: categorical variables -------------------##
 
-#Summary
-skimr::skim(train_data)
+```{r, fig.width=7, fig.height=3, echo = FALSE}
+## --------------------- Data Visualization: categorical variables -------------------##
 
 #Visualize distribution of categorical variables
 train_data %>% 
@@ -237,14 +219,10 @@ train_data %>%
   facet_wrap(~var,scales="free",ncol=3)
 ```
 
-- There's a peak around late 2019 for last_f1_date
-- last_file_date is consistant with committee filing frequency
-- There's a peak around 2008 for times when committees first filed with the FEC
-
 When looking at the date variables within the training dataset, there are several trends that can be observed. For example, when plotting *last_file_date* frequencies, we can see that the most frequent filing date months for the 2018 election year was in July and October. This is consistent with the information that we found from *CMTE_FILING_FREQ* in which most committees file on a quarterly basis (Q3 being in October) while only some file on a semi-annual basis (semi-annual deadline being in July). 
 
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 ## ------------------------- Data Visualization: date variables ---------------------##
 
 #Visualize distribution of date variables
@@ -277,13 +255,10 @@ ggplot(aes(x=last_f1_date)) +
 ## Understanding the Relationship Between Features
 
 ### Conclusions:
-- Many of the usual suspects of swing states and power states (i.e. VA, DC, NY, CA) have the most PACs but most of them are made up of PAC-qualified, not Super PACs
-- States do not differ a lot when it comes to total disbursements/total contributions that PACs raise/spend
-- It is obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state
-- Since Citizens United case, the "first filing date" of Super PACs and PAC - Nonqualified committees have increased exponentially
-- The Citizens United case seems to indicate the start of the majority of "first filing" dates for Super PACs
 
-```{r, echo = FALSE}
+As seen below, many of the "power states" that are usually the center of elections (i.e. VA, DC, NY, CA) are the state that most PACs are registered in. However, there is minimal evidence to support the fact that these states produce more Super PACs as compared to other states (as seen in the figure below). Most of the registration in these states are composed of the PAC type "PAC - Qualified". However, looking at a temporal analysis of the *first_filing_date* variables, there has been an uptick in "PAC - Nonqualified" and "Super PAC" registration in the last decade. This rise in Super PAC registration is almost certainly linked to the *Citizens United v. FEC* Supreme Court case (seen in the figure as the black, vertical line). which ruled that these PACs were legal and distinct from other PACs when registering. However, one can note that the rise of "PAC - Nonqualified" committee types has surpassed Super PACs in registration even before *Citizens United* was decided. 
+
+```{r, fig.width=6, fig.height=4, echo = FALSE, warning = FALSE, message = FALSE}
 ## ------------------------- Data Visualization: More in-depth ---------------------##
 
 # Load
@@ -309,18 +284,20 @@ new_data %>%
 ```
 
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 ## -------------------------------- Data Visualization: Round Dates ----------------------------##
+#Round date variables to nearest month/year
+train_data1 <- train_data %>% 
+  mutate (first_file_date = round_date(first_file_date, unit = "month")) %>% 
+  mutate (last_f1_date = round_date(last_f1_date, unit = "month")) %>% 
+  mutate (last_file_date = round_date(last_file_date, unit = "month"))
+test_data1 <- test_data %>% 
+  mutate (first_file_date = round_date(first_file_date, unit = "month")) %>% 
+  mutate (last_f1_date = round_date(last_f1_date, unit = "month")) %>% 
+  mutate (last_file_date = round_date(last_file_date, unit = "month"))
+```
 
-#Visualize 
-train_data1 %>% 
-  select(first_file_date) %>% 
-  gather(var,val) %>% 
-  ggplot(aes(val)) +
-  stat_count(width = 10) +
-  scale_y_log10() +
-  facet_wrap(~var,scales="free",ncol=3) +
-  coord_flip()
+```{r, fig.width=7, fig.height=3, echo = FALSE}
 
 #PAC Filing over Time by PAC Type
 train_data1 %>% 
@@ -329,24 +306,30 @@ train_data1 %>%
   stat_count(width = 10) +
   scale_fill_discrete(name="PAC Type",
                          breaks=c("N", "O", "Q", "V", "W"),
-                         labels = c("PAC - Nonqualified", "Independent expenditure-only (Super PACs)", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                         labels = c("PAC - Nonqualified", "Independent Expenditure-Only (Super PACs)", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   scale_colour_manual(name="PAC Type",
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
-                      labels = c("PAC - Nonqualified", "Independent expenditure-only (Super PACs)" , "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                      labels = c("PAC - Nonqualified", "Independent Expenditure-Only (Super PACs)" , "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   xlab("Date of First Filing with FEC") +
   ylab("Number of PACs") +
   ggtitle("PAC Filing Over Time by PAC Type") +
   geom_vline(xintercept = as.numeric(as.Date("2010-01-21"))) +
   ggthemes::theme_tufte()
 
-
-
 ```
 
 ## Unpacking the Outcome
 
-###Pre-process the data
+### Pre-process the data
+
+In order to have an accurate model, pre-processing both the test and training dataset is necessary. This includes three steps:
+
+1. Scaling those variables that are not within the same range as other variables
+2. Creating new "dummy" variables to substitute for categorical variables
+3. Detecting missing values and imputing
+
+The first step in my pre-processing method was to take the log() function of all variables that dealt with large sums of money. For the training dataset, that meant taking the natural log of *TTL_CONTB*, *TTL_RECEIPTS*, and *TTL_DISB*. Through this process, it was easier to visualize the differences between these vairables when it came to different committee types and in which state they were registered. In the figure below, it's obvious that PAC-Qualified is the committee type that most often spends and receives the most in each state. Also, most states are pretty similar in the ranges of their contributions, receipts, and expenditures. However, there are states were the ranges of these values are larger for each variables (i.e. DC, NY, CA, etc). There is also a much larger range for total contributions than total disbursements or receipts in most states. This makes sense since contributions are only one aspect of receipts. Contributions are defined as something of monetary value, whereas receipts can be monetary or non-monetary value. For example, volunteering hours to canvas for a campaign. 
 
 ```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Log money variables ----------------------------##
@@ -384,57 +367,75 @@ train_data2 %>%
 
 ```
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 ## -------------------------------- Pre-Process the Data: Visualize log(money) variables ----------------------------##
 #Mapped STATE vs. contributions
 contb <- train_data2 %>% 
   ggplot(aes(TTL_CONTB, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                         labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   scale_colour_manual(name="PAC Type",
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                      labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   geom_jitter(show.legend = T) +
+  xlab("Log(Total Contributions)") +
+  ylab("State of Registration") +
+  ggtitle("Contributions of Committees by Registered State and PAC Type") +
   ggthemes::theme_tufte()
 
 contb
+```
 
-
+```{r, fig.width=10, fig.height=6, echo = FALSE, warning=FALSE}
 #Mapped STATE vs. expenditures
 disb <- train_data2 %>% 
   ggplot(aes(TTL_DISB, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                         labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   scale_colour_manual(name="PAC Type",
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                      labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with non-contribution account - Qualified")) +
   geom_jitter(show.legend = T) +
+  xlab("Log(Total Disbursements)") +
+  ylab("State of Registration") +
+  ggtitle("Disbursements of Committees by Registered State and PAC Type") +
   ggthemes::theme_tufte()
 
 disb
+```
 
-
+```{r, include = FALSE}
 #Mapped STATE vs. expenditures
 receipt <- train_data2 %>% 
   ggplot(aes(TTL_RECEIPTS, CMTE_ST, color = factor(committee_type))) +
     scale_fill_discrete(name="PAC Type",
                          breaks=c("O", "N", "Q", "V", "W"),
-                         labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                         labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   scale_colour_manual(name="PAC Type",
                       breaks=c("N", "O", "Q", "V", "W"), 
                       values = c((brewer.pal(5,"Set1"))),
-                      labels = c("Independent expenditure-only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with non-contribution account - Nonqualified", "PAC with non-contribution account - Qualified")) +
+                      labels = c("Independent Expenditure-Only (Super PACs)", "PAC - Nonqualified", "PAC - Qualified", "PAC with Non-contribution Account - Nonqualified", "PAC with Non-contribution Account - Qualified")) +
   geom_jitter(show.legend = T) +
+  xlab("Log(Total Receipt)") +
+  ylab("State of Registration") +
+  ggtitle("Receipts of Committees by Registered State and PAC Type") +
   ggthemes::theme_tufte()
 
 receipt
 
 ```
 
+The second step in my pre-processing process was to turn some variables, like *party* and *ORG_TP*, from characters into factors. That way, the models I run will know that those are columns with pre-determined values instead of random character strings. Third, I created a recipe which did the following: 
+
+- Impute all monetary variables, taking the 5 closest observations and averaging them out 
+- Turn all categorical variables, like *CMTE_ST* and *party*, and turning them into dummy variables
+- Normalize all numeric values to be within a specific range
+
+This recipe was applied to both the training and test dataset.
 
 ```{r, include = FALSE}
 ###### ----------------------------- Recoding and recipe ---------------------------------######
@@ -479,6 +480,7 @@ skimr::skim(train_data_processed)
 
 ### Cross-Validation
 
+Cross-validation is needed in order to best train the following models. In order to reduce the error as much as possible, the models learn on seperate "chunks" of the training model and then averages the error between all the "chunks" (or folds). In this analysis, the training data will be split into 5 folds. 
 ```{r, include = FALSE}
 ## -------------------------------- Cross-Validation --------------------------------##
 
@@ -505,14 +507,16 @@ skimr::skim(train_data_processed)
 
 # Results
 
-
-- Give a detailed summary of your results.
-– Present your results clearly and concisely.
-– Please use visualizations and tables whenever possible.
-
 ## Models
 
-```{r, echo = FALSE}
+For this analysis, I ran four basic models:
+
+- Logit Model: This linear extension model can include categorical features and, unlike traditional linear models, can accomodate for non-linear shapes. 
+- K-Nearest Neighbors Model: Uses the nearest of the datapoint for a prediction. *k* can be a tuning parameter. Model *mod_knn2* can be seen extending the *k* values to look for the best fit.
+- Classification and Regression Tress (CART): Takes one feature and determines the cut-off point where the "leaf nodes" are the most pure. In other words, where the variance of *y* is the smallest. For this analysis, there was a second CART model ran with changes to the complexity feature (how far the tree can grow). 
+- Random Forest: This model uses the "bagging" method. By creating trees from different subsets of the training data, the model can aggregate the predictions. 
+
+```{r, include = FALSE}
 ## ------------------------------------- Models -------------------------------------##
 
 
@@ -583,6 +587,7 @@ mod_cart2 <-
         trControl = control_conditions
   )
 
+fancyRpartPlot(mod_cart$finalModel)
 
 #Random Forest
 
@@ -596,13 +601,14 @@ mod_rf <-
 
 plot(mod_rf)
 
-fancyRpartPlot(mod_cart$finalModel)
-
 ```
 
 ## Model Comparison
 
-```{r, echo = FALSE}
+In terms of sensitivity (obtaining a true positive), then the 2nd K-Nearest Neighbors model would be the best. This model, however, fails when it comes to specificity (obtaining a true negative). By looking at both of these values, random forest is the best fitting model. 
+
+
+```{r, fig.width=7, fig.height=3, echo = FALSE}
 ## ------------------------------------- Model Comparison  -------------------------------------##
 
 mod_list <-
@@ -622,64 +628,69 @@ dotplot(resamples(mod_list))
 
 ## Predictive Performance
 
+Running this model with the unseen, test data gives great results. When trying to predict "yes" values with *SuperPAC_yes* variable, the model had over 99% specificity and sensitivity with a 95% confidence level. 
+
 ```{r, include = FALSE}
 ## ------------------------------------- Unpacking the Outcome: Predictive Performance -------------------------------------##
 
 pred <- predict(mod_rf,newdata = test_data_processed)
-
-confusionMatrix(table(pred,test_data_processed$SuperPAC_yes))
 
 confusionMatrix(pred,test_data_processed$SuperPAC_yes,positive='yes')
 ```
 
 ## Variable Importance
 
-```{r}
-## ------------------------------------- Unpacking the Outcome: Variable Importance -------------------------------------##
+Variable importance can show us the top variables that contributed to the model. In this case, when the committee first filed and what organization type they are are the two top predictors for the random forest model. 
 
-# install.packages("vip") # Install the package
-#pred_wrapper <- function(object, new_data) {
+```{r, fig.width=7, fig.height=3, echo = FALSE, warning=FALSE, message=FALSE}
+## ------------------------------------- Unpacking the Outcome: Variable Importance -------------------------------------##
+require(vip) # Install the package
+pred_wrapper <- function(object, newdata) {
   # wrapper function so vip knows how to calculate a prediction
-  #predict(object, data=new_data,type="response")$predictions[,"yes"]
-#}
+  predict(object, data=newdata,type="response")$predictions[,"yes"]
+}
 
 # Generate a variable importance plot
-#permute_imp_plot <- 
- # vip::vip(mod_rf$finalModel,
-          # data = train_data_processed,
-          # target=train_data_processed$SuperPAC_yes,
-          # train = train_data_processed %>% select(-SuperPAC_yes),
-          # reference_class = "yes",
-          # method="permute",
-          # pred_wrapper = pred_wrapper)
-```
+permute_imp_plot <- 
+  vip::vip(mod_rf$finalModel,
+           data = train_data_processed,
+           target = train_data_processed$SuperPAC_yes,
+           train = train_data_processed %>% select(-SuperPAC_yes),
+           reference_class = "yes",
+           method="permute",
+           pred_wrapper = pred_wrapper)
 
-## Partial Dependency
+permute_imp_plot
 
-```{r}
-## ------------------------------------- Unpacking the Outcome: Partial Dependency -------------------------------------##
-
-# install.packages('pdp') Download the partial dependency plot
-pdp_dat = pdp::partial(mod_rf, 
-                        pred.var = c("first_file_date"), 
-                        ice = F, 
-                        center = F, 
-                        prob = T,
-                        type= "classification",
-                        train = train_data_processed) 
-pdp_dat
-
-pdp_dat %>% 
-  ggplot(aes(first_file_date,yhat)) + geom_line() +
-  labs(y="Pr(SuperPAC_yes == 1)")
 ```
 
 # Discussion
 
-- Speak on the “success” of your project (as defined in your proposal).
-  - Did you achieve what you set out to do? If not why?
-– What tools/methods did you consider but not use in the final analysis?
-– How would you expand the analysis if given more time?
+In my project proposal for this assignment, I addressed the following criteria for success:
+
+1. I finish this project, without regrets/concerns/adjustments, by December 14th, 2019 at 9:00pm and
+that I’m proud of the final submission
+2. This project contains valuable information regarding federal PACs in 2019 that can be used as an
+easily accessible resource for anyone not accustomed to the vocabulary of campaign finance. In other
+words, anyone who doesn’t work in the campaign finance world could easily look at this final project
+and understand what it’s saying and its importance to the upcoming election
+3. The final product is a document that I can show my supervisor, who is familiar with campaign finance
+data, and that he would easily be able to understand the importance of such a document
+4. At the end of this project, I can say with a reasonable degree of certainty:
+a. Which party during the 2019 filing year has a more negative sentiment in consideration with PACs
+b. Which party a PAC is connected with given a reasonable number of important factors (i.e. expenditures,
+contributions, state, etc.)
+
+I did not achieve all of these goals. One goal that I did not achieve was to analyze committee names through tokenziation to see which party had more negative/positive sentiment associated with it. After looking at my data more closely, I found that a vast majority of the observations did not have a party associated with them. However, I do believe that I made campaign finance relatively accessible yet informative in this document. 
+
+If given more time, I would investigate the date variables in more depth. I would like to round them to their nearest month/year and then see if there are more patterns that I didn't see by looking at it as a continuous variable. Also, I would think about adding data in from more election years to see how the financials of PACs vs. Super PACs have distinguished themselves over time. 
+
+
+
+
+
+
+
 
 
 
